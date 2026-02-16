@@ -95,6 +95,17 @@ const calculateAge = (dob: string): number => {
     return age;
 };
 
+const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return "";
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "";
+        return date.toISOString().split('T')[0];
+    } catch (e) {
+        return "";
+    }
+};
+
 const parseNumberList = (str: string | undefined): number[] => {
     if (!str) return [];
     return str.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
@@ -129,13 +140,13 @@ const SystemCard = ({ result }: { result: SystemResult }) => {
         ? "bg-[#EEF2FF] border-[#E0E7FF] dark:bg-blue-900/20 dark:border-blue-800"
         : "bg-[#FFFBEB] border-[#FEF3C7] dark:bg-amber-900/20 dark:border-amber-800";
 
-    const baseColorClass = isChaldean ? "text-blue-600" : "text-amber-600";
+    const baseColorClass = isChaldean ? "text-astro-gold" : "text-astro-red";
     const statusBorder = getResultColor(result.resultType);
 
     return (
         <motion.div
             whileHover={{ y: -5, scale: 1.01 }}
-            className={`p-8 flex flex-col items-center text-center relative overflow-hidden group border-2 rounded-[2.5rem] ${bgClass} ${statusBorder} transition-all duration-500 shadow-sm hover:shadow-xl`}
+            className={`p-6 flex flex-col items-center text-center relative overflow-hidden group border-2 rounded-[2rem] bg-white ${statusBorder} transition-all duration-500 shadow-sm hover:shadow-xl`}
         >
             <div className="z-10 relative w-full flex flex-col items-center">
                 <h3 className={`text-[10px] uppercase tracking-[0.3em] font-black mb-4 opacity-50 ${baseColorClass}`}>
@@ -242,6 +253,8 @@ export default function AdminCheck() {
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [showListing, setShowListing] = useState(false); // New State for toggling list vs form
 
+    const [isUpdatingClient, setIsUpdatingClient] = useState(false);
+
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -292,14 +305,14 @@ export default function AdminCheck() {
             setCallingName(urlName);
         }
         const urlDob = searchParams.get('dob');
-        if (urlDob) setDob(urlDob);
+        if (urlDob) setDob(formatDateForInput(urlDob));
 
         const clientId = searchParams.get('client_id');
         if (clientId) {
             fetchClient(clientId);
             fetchHistory(clientId);
         }
-    }, []); // Run once on mount
+    }, [searchParams]); // Re-run if client_id changes
 
     useEffect(() => {
         const checkIdParam = searchParams.get('check_id');
@@ -325,7 +338,7 @@ export default function AdminCheck() {
             if (res.ok) {
                 const data = await res.json();
                 setSelectedClient(data);
-                if (data.dob) setDob(data.dob);
+                if (data.dob) setDob(formatDateForInput(data.dob));
                 if (data.calling_name) setCallingName(data.calling_name);
             }
         } catch (e) {
@@ -503,7 +516,7 @@ export default function AdminCheck() {
     // Confirm Flow
     const [checkId, setCheckId] = useState<number | null>(null);
     const [confirmed, setConfirmed] = useState(false);
-    // Manual Save Logic
+    // Unified Save Logic
     const saveToBackend = async () => {
         if (!callingName || !dob) return;
 
@@ -512,6 +525,7 @@ export default function AdminCheck() {
         setIsSaving(true);
 
         try {
+            // 1. Save Analysis Record
             const res = await fetch("http://localhost:8080/api/admin/calculate", {
                 method: "POST",
                 headers: {
@@ -519,7 +533,7 @@ export default function AdminCheck() {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    id: checkId, // Pass ID if editing
+                    id: checkId,
                     name: callingName,
                     original_name: originalName,
                     dob: dob,
@@ -527,26 +541,72 @@ export default function AdminCheck() {
                 })
             });
             const data = await res.json();
+            let newCheckId = checkId;
+
             if (data.check_id) {
-                setCheckId(data.check_id);
+                newCheckId = data.check_id;
+                setCheckId(newCheckId);
                 setConfirmed(false);
                 if (clientId) fetchHistory(clientId);
             }
+
+            // 2. Automatic: Update Client Profile & Confirm (Perfect UX)
+            if (selectedClient && newCheckId) {
+                // Update Client Profile
+                setIsUpdatingClient(true);
+                await fetch(`${BASE_URL}/admin/clients/${selectedClient.id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ calling_name: callingName })
+                });
+                setSelectedClient({ ...selectedClient, calling_name: callingName });
+                setIsUpdatingClient(false);
+
+                // Confirm Analysis
+                await fetch("http://localhost:8080/api/admin/numerology/confirm", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ check_id: newCheckId, type: 'Name' })
+                });
+                setConfirmed(true);
+            }
+
         } catch (e) {
-            console.error("Save failed", e);
+            console.error("Submit failed", e);
         } finally {
             setIsSaving(false);
         }
     };
 
-    const resetAnalysis = () => {
+
+
+    const resetAnalysis = (keepClient = false) => {
         setCallingName("");
+        if (!keepClient) {
+            setOriginalName("");
+            setDob("");
+            setSelectedClient(null);
+        }
         setCheckId(null);
         setConfirmed(false);
         setBreakdown([]);
         setChaldeanRes(null);
         setPythagoreanRes(null);
         setShowListing(false);
+
+        // Clear URL parameters
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('check_id');
+        params.delete('name');
+        params.delete('dob');
+        if (!keepClient) params.delete('client_id');
+        router.replace(`?${params.toString()}`);
     };
 
     const downloadPDF = () => {
@@ -698,26 +758,6 @@ export default function AdminCheck() {
         doc.save(`${selectedClient?.full_name}_Name_Analysis.pdf`);
     };
 
-    const confirmName = async () => {
-        if (!checkId) return;
-        try {
-            const res = await fetch("http://localhost:8080/api/admin/numerology/confirm", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('admin_token')}`
-                },
-                body: JSON.stringify({ check_id: checkId, type: 'Name' })
-            });
-            if (res.ok) {
-                setConfirmed(true);
-                const clientId = searchParams.get('client_id');
-                if (clientId) fetchHistory(clientId);
-            }
-        } catch (err) {
-            console.error("Failed to confirm", err);
-        }
-    };
 
     // ...
 
@@ -725,7 +765,7 @@ export default function AdminCheck() {
 
     if (showListing && selectedClient) {
         return (
-            <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <div className="container mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
                         <button onClick={() => router.back()} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
@@ -742,7 +782,7 @@ export default function AdminCheck() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowListing(false)}
+                        onClick={() => resetAnalysis(true)}
                         className="px-6 py-2.5 font-bold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
                     >
                         <PlusCircle size={18} /> New Analysis
@@ -759,7 +799,7 @@ export default function AdminCheck() {
                                 setCheckId(record.id);
                                 setShowListing(false);
                             }}
-                            className="w-full text-left p-6 rounded-[2rem] border bg-card/60 backdrop-blur-md border-border/50 hover:border-primary/50 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
+                            className="w-full text-left p-4 rounded-2xl border bg-white border-black/5 hover:border-[#D4AF37]/50 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
                         >
                             <div className="flex flex-col gap-1">
                                 <span className="text-xl font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
@@ -787,7 +827,7 @@ export default function AdminCheck() {
 
     return (
         <>
-            <div className="max-w-7xl mx-auto space-y-8 pb-20">
+            <div className="container mx-auto space-y-8 pb-12">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
@@ -801,87 +841,31 @@ export default function AdminCheck() {
                         }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
                             <ArrowLeft size={20} />
                         </button>
-                        <div>
-                            <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
-                                <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                    <Sparkles size={24} />
-                                </span>
-                                {checkId ? 'Edit Analysis' : 'Name Numerology'}
-                            </h1>
-                            <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Analyze Name Vibrations</p>
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                            <div>
+                                <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
+                                    <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                        <Sparkles size={24} />
+                                    </span>
+                                    {checkId ? 'Edit Analysis' : 'Name Numerology'}
+                                </h1>
+                                <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Analyze Name Vibrations</p>
+                            </div>
+
+                            {chaldeanRes && (
+                                <button
+                                    onClick={downloadPDF}
+                                    className="px-4 py-2 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-xs text-primary shadow-sm hover:shadow-md active:scale-95 md:ml-4"
+                                >
+                                    <Download size={16} /> Download PDF
+                                </button>
+                            )}
                         </div>
                     </div>
-                    <div className="flex gap-4 items-center">
-                        {(nameHistory.length > 0 && !checkId) && (
-                            <button
-                                onClick={() => {
-                                    setOriginalName("");
-                                    setCallingName("");
-                                    setCheckId(null);
-                                    setShowListing(true);
-                                }}
-                                className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-                            >
-                                <History size={18} /> View Saved
-                            </button>
-                        )}
-                        {callingName && (
-                            <button onClick={saveToBackend} disabled={isSaving} className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${isSaving ? "bg-muted text-muted-foreground cursor-wait" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
-                                <Save size={18} /> {isSaving ? 'Saving...' : (checkId ? 'Update Record' : 'Save to Records')}
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex gap-3 items-center">
-                    {/* New Analysis Button */}
-                    <button
-                        onClick={resetAnalysis}
-                        className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-                    >
-                        <PlusCircle size={18} /> New Analysis
-                    </button>
-
-                    <div className="w-px h-6 bg-border mx-1" />
-                    {/* Save Button */}
-                    {callingName && (
-                        <button
-                            onClick={saveToBackend}
-                            disabled={isSaving}
-                            className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${isSaving
-                                ? "bg-muted text-muted-foreground cursor-wait"
-                                : "bg-blue-600 text-white hover:bg-blue-700"}`}
-                        >
-                            <Save size={18} /> {isSaving ? 'Saving...' : (checkId ? 'Update Record' : 'Save to Records')}
-                        </button>
-                    )}
-
-                    {chaldeanRes && (
-                        <button
-                            onClick={downloadPDF}
-                            className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-primary shadow-sm hover:shadow-md active:scale-95"
-                        >
-                            <Download size={18} /> Download PDF
-                        </button>
-                    )}
-
-                    {checkId && (
-                        <button
-                            onClick={confirmName}
-                            disabled={confirmed}
-                            className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${confirmed
-                                ? "bg-green-500/10 text-green-500 border border-green-500/20 cursor-default"
-                                : "bg-gradient-primary text-white glow-on-hover"}`}
-                        >
-                            {confirmed ? (
-                                <><div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center"><Star size={12} className="fill-green-500" /></div> Confirmed</>
-                            ) : (
-                                <><CheckCircle size={18} /> ✅ Confirm This Name</>
-                            )}
-                        </button>
-                    )}
                 </div>
             </div>
+
+
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
 
@@ -889,11 +873,11 @@ export default function AdminCheck() {
                 <div className="xl:col-span-2 space-y-8">
 
                     {/* Search Overlay / Client Display */}
-                    <div className="relative z-50">
+                    <div className="relative">
                         {selectedClient ? (
-                            <div className="premium-card p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 backdrop-blur-md flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="p-4 rounded-xl border border-[#10B981]/20 bg-[#FAF7F2] flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-primary rounded-xl text-black shadow-lg shadow-primary/20">
+                                    <div className="p-3 bg-astro-gradient rounded-xl text-white shadow-lg shadow-primary/20">
                                         <Users size={20} />
                                     </div>
                                     <div className="flex flex-col">
@@ -931,7 +915,7 @@ export default function AdminCheck() {
                                     <button key={c.id} onClick={() => {
                                         setOriginalName(c.full_name);
                                         setCallingName(c.calling_name || c.full_name);
-                                        setDob(c.dob);
+                                        setDob(formatDateForInput(c.dob));
                                         setSelectedClient(c);
                                         setClientSearch("");
                                         setShowDropdown(false);
@@ -955,13 +939,13 @@ export default function AdminCheck() {
                     </div>
 
                     {/* Main Input Area */}
-                    <div className="premium-card p-6 rounded-[2rem] border border-border relative overflow-hidden bg-card/60 backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-2xl border border-black/5 shadow-xl relative overflow-hidden">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                             {/* Static Ref */}
                             <div className="space-y-2 group">
                                 <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center gap-2 mb-1 pl-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-muted group-focus-within:bg-muted-foreground transition-colors" />
-                                    Original Name (Reference)
+                                    Original calling Name
                                 </label>
                                 <input
                                     value={originalName}
@@ -975,7 +959,7 @@ export default function AdminCheck() {
                             <div className="space-y-2 group">
                                 <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center gap-2 mb-1 pl-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-muted group-focus-within:bg-muted-foreground transition-colors" />
-                                    Date of Birth
+                                    DOB
                                 </label>
                                 <input
                                     type="date"
@@ -989,7 +973,7 @@ export default function AdminCheck() {
                             <div className="space-y-2 group">
                                 <label className="text-[9px] uppercase tracking-[0.2em] text-primary font-black flex items-center gap-2 mb-1 pl-1">
                                     <Sparkles size={10} className="text-primary animate-pulse" />
-                                    Calling Name (Live Analysis)
+                                    Changing Name to
                                 </label>
                                 <div className="relative">
                                     <input
@@ -999,12 +983,34 @@ export default function AdminCheck() {
                                         placeholder="SEARCH VIBRATION..."
                                         autoFocus
                                     />
-                                    <div className="absolute right-3 bottom-3 text-[8px] text-muted-foreground font-black uppercase tracking-widest opacity-40">
-                                        {callingName.length} / 25
+                                    <div className="absolute right-3 bottom-1/2 translate-y-1/2 flex items-center gap-2">
+                                        <div className="text-[8px] text-muted-foreground font-black uppercase tracking-widest opacity-40">
+                                            {callingName.length} / 25
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Action Buttons Row */}
+                        {callingName && (
+                            <div className="flex items-center justify-end mt-4 pt-4 border-t border-border/50">
+                                <button
+                                    onClick={saveToBackend}
+                                    disabled={isSaving}
+                                    className={`px-6 py-2 font-black rounded-xl transition-all flex items-center gap-3 shadow-xl hover:shadow-2xl active:scale-95 min-w-[300px] justify-center text-lg ${isSaving ? "bg-muted text-muted-foreground cursor-wait" : "bg-astro-gradient text-white"}`}
+                                >
+                                    {isSaving ? (
+                                        <>Finalising...</>
+                                    ) : (
+                                        <>
+                                            <Save size={24} />
+                                            {selectedClient ? 'FINALISE & UPDATE PROFILE' : (checkId ? 'UPDATE RECORD' : 'SUBMIT & SAVE ANALYSIS')}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
 
                         {/* Visual Ornament */}
                         <div className="absolute top-0 right-0 p-3 opacity-5">
@@ -1019,16 +1025,16 @@ export default function AdminCheck() {
                             {/* Birth Data & Lucky Numbers */}
                             {birthData && (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="premium-card p-6 rounded-[2rem] border border-border text-center bg-card/60 backdrop-blur-sm group hover:border-[#D4AF37]/30 transition-all">
-                                        <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.2em] mb-4">Driver (Mulank)</p>
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-[#10B981]/30 transition-all">
+                                        <p className="text-[10px] font-black text-[#10B981] uppercase tracking-[0.2em] mb-4">Driver (Mulank)</p>
                                         <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthData.driver}</div>
-                                        <div className="flex items-center justify-center gap-2 text-[#D4AF37] font-bold">
-                                            <Star size={14} className="fill-[#D4AF37]" />
+                                        <div className="flex items-center justify-center gap-2 text-[#10B981] font-bold">
+                                            <Star size={14} className="fill-[#10B981]" />
                                             <span className="text-xs uppercase tracking-widest">{birthData.driverPlanet}</span>
                                         </div>
                                     </div>
 
-                                    <div className="premium-card p-6 rounded-[2rem] border border-border text-center bg-card/60 backdrop-blur-sm group hover:border-[#6366f1]/30 transition-all">
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-[#6366f1]/30 transition-all">
                                         <p className="text-[10px] font-black text-[#6366f1] uppercase tracking-[0.2em] mb-4">Conductor (Bhagyank)</p>
                                         <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthData.conductor}</div>
                                         <div className="flex items-center justify-center gap-2 text-[#6366f1] font-bold">
@@ -1037,7 +1043,7 @@ export default function AdminCheck() {
                                         </div>
                                     </div>
 
-                                    <div className="premium-card p-6 rounded-[2rem] border border-border bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center group hover:border-green-500/30 transition-all">
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-green-500/30 transition-all">
                                         <p className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em] mb-4">Auspicious Numbers</p>
                                         <div className="flex flex-wrap gap-2 justify-center">
                                             {luckyNumbers.map(num => (
@@ -1065,7 +1071,7 @@ export default function AdminCheck() {
 
 
                             {/* 2. Live Breakdown Table */}
-                            <div className="premium-card bg-card/40 border border-border rounded-[2rem] p-8 overflow-hidden backdrop-blur-md">
+                            <div className="bg-white border border-black/5 shadow-xl rounded-3xl p-6 overflow-hidden">
                                 <div className="flex items-center justify-between mb-8">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1145,7 +1151,7 @@ export default function AdminCheck() {
                             {/* 3. Meaning Descriptions */}
                             <div className="grid grid-cols-1 gap-6">
                                 {chaldeanRes?.description && (
-                                    <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
+                                    <div className="p-6 rounded-2xl border border-black/5 relative overflow-hidden bg-white shadow-lg group">
                                         <div className="absolute top-0 left-0 w-1.5 h-full bg-mystic-gold" />
                                         <h3 className="text-mystic-gold font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
                                             <span className="p-1.5 bg-mystic-gold/10 rounded-lg"><Sparkles size={14} /></span>
@@ -1157,7 +1163,7 @@ export default function AdminCheck() {
                                     </div>
                                 )}
                                 {pythagoreanRes?.description && (
-                                    <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
+                                    <div className="p-6 rounded-2xl border border-black/5 relative overflow-hidden bg-white shadow-lg group">
                                         <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
                                         <h3 className="text-primary font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
                                             <span className="p-1.5 bg-primary/10 rounded-lg"><Sparkles size={14} /></span>
@@ -1183,7 +1189,7 @@ export default function AdminCheck() {
                     {/* Saved History */}
 
 
-                    <div className="premium-card p-8 rounded-[2rem] border border-border sticky top-32 bg-card/60 backdrop-blur-md no-print">
+                    <div className="bg-white p-6 rounded-3xl border border-black/5 sticky top-20 shadow-xl no-print">
                         <h2 className="text-xl font-black text-foreground mb-8 flex items-center gap-3 tracking-tight">
                             <span className="p-2 bg-muted rounded-xl text-foreground"><Database size={20} /></span>
                             Universal Keys

@@ -7,12 +7,16 @@ use App\Models\NumerologySystemModel;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\RESTful\ResourceController;
 
-class BusinessNumerologyController extends ResourceController
+class BusinessNumerologyController extends BaseController
 {
     use ResponseTrait;
 
     public function check()
     {
+        if (!$this->checkModuleAccess('business')) {
+            return $this->failForbidden('Access to Business module requires a Professional subscription.');
+        }
+
         $businessName = $this->request->getVar('business_name');
         $clientId = $this->request->getVar('client_id');
 
@@ -37,8 +41,9 @@ class BusinessNumerologyController extends ResourceController
             $checkModel = new \App\Models\ClientBusinessCheckModel();
 
             $data = [
+                'user_id' => $this->getVendorId(),
                 'client_id' => $clientId,
-                'client_id' => $clientId,
+                'business_sector_id' => $this->request->getVar('business_sector_id'),
                 'business_name' => $businessName,
                 'original_name' => $this->request->getVar('original_name'),
                 'chaldean_compound' => $nameAnalysis['chaldean']['compound'],
@@ -51,6 +56,10 @@ class BusinessNumerologyController extends ResourceController
             ];
 
             if ($id) {
+                // Validate ownership before update
+                if (!$this->validateOwnership(\App\Models\ClientBusinessCheckModel::class, $id)) {
+                    return $this->failForbidden('Access denied');
+                }
                 $checkModel->update($id, $data);
                 $savedCheckId = $id;
             } else {

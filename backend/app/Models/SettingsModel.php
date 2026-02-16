@@ -14,4 +14,11 @@ class SettingsModel extends Model
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+
+    public static function getSetting($key, $default = null)
+    {
+        $model = new self();
+        $setting = $model->where('setting_key', $key)->first();
+        return $setting ? $setting['setting_value'] : $default;
+    }
 }

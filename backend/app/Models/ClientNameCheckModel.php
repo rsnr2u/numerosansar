@@ -13,6 +13,7 @@ class ClientNameCheckModel extends Model
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
+        'user_id',
         'client_id',
         'type',
         'name_value',

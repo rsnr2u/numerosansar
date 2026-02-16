@@ -2,27 +2,63 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\RESTful\ResourceController;
+use App\Controllers\BaseController;
+use CodeIgniter\API\ResponseTrait;
 use App\Models\ClientModel;
 
-class ClientController extends ResourceController
+class ClientController extends BaseController
 {
-    protected $modelName = 'App\Models\ClientModel';
-    protected $format = 'json';
+    use ResponseTrait;
+    protected $model;
 
-    // GET /api/admin/clients
+    public function __construct()
+    {
+        $this->model = new ClientModel();
+    }
+
     public function index()
     {
         try {
             $search = $this->request->getGet('search');
+            $vendorIdFilter = $this->request->getGet('vendor_id');
+            $vendorId = $this->getVendorId();
+
+            $perPage = $this->request->getGet('per_page') ?? 10;
+            $page = $this->request->getGet('page') ?? 1;
+            $shouldPaginate = $this->request->getGet('paginate') === 'true';
+
+            $this->model->select('clients.*, users.full_name as added_by_name, 
+                ((SELECT COUNT(*) FROM client_name_checks WHERE client_id = clients.id) + 
+                 (SELECT COUNT(*) FROM client_business_checks WHERE client_id = clients.id) + 
+                 (SELECT COUNT(*) FROM client_mobile_checks WHERE client_id = clients.id) + 
+                 (SELECT COUNT(*) FROM client_vehicle_checks WHERE client_id = clients.id)) as check_count');
+            $this->model->join('users', 'users.id = clients.user_id', 'left');
+
+            if ($this->getVendorRole() === 'super_admin') {
+                if ($vendorIdFilter) {
+                    $this->model->where('clients.user_id', $vendorIdFilter);
+                }
+            } else {
+                $this->model->where('clients.user_id', $vendorId);
+            }
 
             if ($search) {
                 $this->model->groupStart()
-                    ->like('full_name', $search)
-                    ->orLike('calling_name', $search)
-                    ->orLike('email_id', $search)
-                    ->orLike('mobile_number', $search)
+                    ->like('clients.full_name', $search)
+                    ->orLike('clients.calling_name', $search)
                     ->groupEnd();
+            }
+
+            if ($shouldPaginate) {
+                $totalRecords = $this->model->countAllResults(false);
+                $data = $this->model->orderBy('id', 'DESC')->paginate((int) $perPage, 'default', (int) $page);
+
+                return $this->respond([
+                    'data' => $data,
+                    'total' => $totalRecords,
+                    'current_page' => (int) $page,
+                    'per_page' => (int) $perPage
+                ]);
             }
 
             $data = $this->model->orderBy('id', 'DESC')->findAll(100);
@@ -35,16 +71,29 @@ class ClientController extends ResourceController
     // GET /api/admin/clients/(:id)
     public function show($id = null)
     {
+        if (!$this->validateOwnership(ClientModel::class, $id)) {
+            return $this->failForbidden('Access denied');
+        }
+
         $data = $this->model->find($id);
-        if (!$data)
-            return $this->failNotFound('Client not found');
         return $this->respond($data);
     }
 
     // POST /api/admin/clients
     public function create()
     {
+        $vendorId = $this->getVendorId();
+        if (!$vendorId) {
+            return $this->failUnauthorized('Authentication required');
+        }
+
+        if (!$this->checkUsageLimit()) {
+            return $this->failForbidden('Client limit reached for your current plan. Please upgrade.');
+        }
+
         $data = $this->request->getJSON(true);
+        $data['user_id'] = $vendorId;
+
         if (!$this->model->insert($data)) {
             return $this->failValidationErrors($this->model->errors());
         }
@@ -54,10 +103,13 @@ class ClientController extends ResourceController
     // PUT /api/admin/clients/(:id)
     public function update($id = null)
     {
-        $data = $this->request->getJSON(true);
-        if (!$this->model->find($id)) {
-            return $this->failNotFound('Client not found');
+        if (!$this->validateOwnership(ClientModel::class, $id)) {
+            return $this->failForbidden('Access denied');
         }
+
+        $data = $this->request->getJSON(true);
+        unset($data['user_id']); // Prevent changing owner
+
         if (!$this->model->update($id, $data)) {
             return $this->failValidationErrors($this->model->errors());
         }
@@ -67,9 +119,10 @@ class ClientController extends ResourceController
     // DELETE /api/admin/clients/(:id)
     public function delete($id = null)
     {
-        if (!$this->model->find($id)) {
-            return $this->failNotFound('Client not found');
+        if (!$this->validateOwnership(ClientModel::class, $id)) {
+            return $this->failForbidden('Access denied');
         }
+
         $this->model->delete($id);
         return $this->respondDeleted(['message' => 'Client deleted successfully']);
     }
@@ -77,6 +130,10 @@ class ClientController extends ResourceController
     // GET /api/admin/clients/(:id)/history
     public function getHistory($id = null)
     {
+        if (!$this->validateOwnership(ClientModel::class, $id)) {
+            return $this->failForbidden('Access denied');
+        }
+
         $nameModel = new \App\Models\ClientNameCheckModel();
         $businessModel = new \App\Models\ClientBusinessCheckModel();
         $mobileModel = new \App\Models\ClientMobileCheckModel();
@@ -91,7 +148,6 @@ class ClientController extends ResourceController
 
         foreach ($names as $n) {
             $n['type'] = 'Name';
-            $n['name_value'] = $n['name_value'];
             $combined[] = $n;
         }
         foreach ($business as $b) {
@@ -110,70 +166,60 @@ class ClientController extends ResourceController
             $combined[] = $v;
         }
 
-        // Sort by created_at DESC
         usort($combined, function ($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
+            return strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
         });
 
-        return $this->response->setJSON($combined);
+        return $this->respond($combined);
     }
 
     // POST /api/admin/numerology/confirm
     public function confirmSelection()
     {
         $id = $this->request->getVar('check_id');
-        $type = $this->request->getVar('type'); // Name, Business, Mobile, Vehicle
+        $type = $this->request->getVar('type');
 
         if (!$id || !$type) {
             return $this->fail('Check ID and Type are required');
         }
 
-        $model = null;
+        $modelClass = null;
         switch ($type) {
             case 'Name':
-                $model = new \App\Models\ClientNameCheckModel();
+                $modelClass = \App\Models\ClientNameCheckModel::class;
                 break;
             case 'Business':
-                $model = new \App\Models\ClientBusinessCheckModel();
+                $modelClass = \App\Models\ClientBusinessCheckModel::class;
                 break;
             case 'Mobile':
-                $model = new \App\Models\ClientMobileCheckModel();
+                $modelClass = \App\Models\ClientMobileCheckModel::class;
                 break;
             case 'Vehicle':
-                $model = new \App\Models\ClientVehicleCheckModel();
+                $modelClass = \App\Models\ClientVehicleCheckModel::class;
                 break;
             default:
                 return $this->fail('Invalid type');
         }
 
+        if (!$this->validateOwnership($modelClass, $id)) {
+            return $this->failForbidden('Access denied');
+        }
+
+        $model = new $modelClass();
         $check = $model->find($id);
-        if (!$check) {
-            return $this->failNotFound('Check record not found');
-        }
-
         $clientId = $check['client_id'];
-        if (!$clientId) {
-            return $this->fail('No client linked to this check');
-        }
 
-        // 1. Un-confirm any previous selection of the same type for this client
-        $model->where([
-            'client_id' => $clientId
-        ])->set(['is_confirmed' => 0])->update();
+        // Un-confirm others of same type for this client
+        $model->where(['client_id' => $clientId])->set(['is_confirmed' => 0])->update();
 
-        // 2. Confirm the selected check
+        // Confirm this one
         $model->update($id, ['is_confirmed' => 1]);
 
-        // 3. If it's a Name check, sync the calling_name to the client's profile
         if ($type === 'Name') {
-            $clientModel = new \App\Models\ClientModel();
+            $clientModel = new ClientModel();
             $clientModel->update($clientId, ['calling_name' => $check['name_value']]);
         }
 
-        return $this->respond([
-            'message' => 'Selection confirmed successfully',
-            'type' => $type,
-            'value' => $check['name_value'] ?? ($check['business_name'] ?? ($check['mobile_number'] ?? ($check['vehicle_number'] ?? '')))
-        ]);
+        return $this->respond(['message' => 'Selection confirmed successfully']);
     }
 }

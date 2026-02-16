@@ -12,13 +12,13 @@ class NumerologyCalculator
     private $auspiciousModel;
     private $letterMap = [];
     private $planetMap = [];
-    private $auspiciousMap = [];
+    private $planetRelationMap = [];
 
     public function __construct()
     {
         $this->letterModel = new NumerologySystemModel();
         $this->planetModel = new NumerologyPlanetModel();
-        $this->auspiciousModel = new \App\Models\AuspiciousNumberModel();
+        $this->planetRelationModel = new \App\Models\PlanetRelationModel();
         $this->loadMappings();
     }
 
@@ -40,10 +40,11 @@ class NumerologyCalculator
             $this->planetMap[$p['number']] = $p['planet_name']; // Correct column
         }
 
-        // Cache auspicious numbers
-        $auspicious = $this->auspiciousModel->findAll();
-        foreach ($auspicious as $row) {
-            $this->auspiciousMap[$row['root_number']][] = $row['number'];
+        // Cache planet relations (planetary compatibility matrix)
+        $relations = $this->planetRelationModel->findAll();
+        foreach ($relations as $row) {
+            $friends = array_map('trim', explode(',', $row['friend_numbers'] ?? ''));
+            $this->planetRelationMap[$row['root_number'] ?? $row['planet_number']] = array_filter($friends);
         }
     }
 
@@ -107,7 +108,7 @@ class NumerologyCalculator
                 $birthNumber = $this->reduceToSingle((int) $day);
 
                 // Get Auspicious List based on Birth Number
-                $auspiciousList = $this->auspiciousMap[$birthNumber] ?? [];
+                $auspiciousList = $this->planetRelationMap[$birthNumber] ?? [];
 
                 // Life Path (Road) - Full Date
                 // Method: Reduce components then sum? Or sum all digits?

@@ -7,7 +7,6 @@ type FetchOptions = RequestInit & {
 export const api = {
     async request(endpoint: string, options: FetchOptions = {}) {
         const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
-
         const url = new URL(`${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`);
 
         if (options.params) {
@@ -32,28 +31,62 @@ export const api = {
         try {
             const response = await fetch(url.toString(), config);
 
+            // Robust JSON parsing with fallback
+            const safeJson = async (res: Response) => {
+                const text = await res.text();
+                try {
+                    return text.length > 0 ? JSON.parse(text) : {};
+                } catch (e) {
+                    console.error("JSON Parse Error. Content was:", text.substring(0, 100));
+                    return { _error: "Invalid JSON response", _raw: text };
+                }
+            };
+
             if (response.status === 401) {
-                // Clear tokens and redirect
+                const errorData = await safeJson(response);
+                console.warn(`Unauthorized [401] at ${endpoint}:`, errorData);
+
+                // Clear tokens
                 localStorage.removeItem("admin_token");
                 localStorage.removeItem("token");
-                if (typeof window !== "undefined" && !window.location.pathname.includes("/admin/login")) {
-                    window.location.href = "/admin/login";
+                localStorage.removeItem("user_role");
+                localStorage.removeItem("username");
+
+                if (typeof window !== "undefined") {
+                    const isSuperAdminRoute = window.location.pathname.startsWith('/super-admin');
+                    const loginPath = isSuperAdminRoute ? '/super-admin/login' : '/admin/login';
+
+                    if (!window.location.pathname.includes(loginPath)) {
+                        const now = Date.now();
+                        const lastRedirect = (window as any)._lastRedirectTime || 0;
+                        if (now - lastRedirect > 2000) {
+                            (window as any)._lastRedirectTime = now;
+                            window.location.href = `${loginPath}?expired=true`;
+                        }
+                    }
                 }
-                throw new Error("Session expired. Please login again.");
+                throw new Error(errorData.error || errorData.message || "Session expired");
             }
 
-            return response;
+            // Return an object that mimics standard response but has a safer json method
+            return {
+                ok: response.ok,
+                status: response.status,
+                json: () => safeJson(response),
+                headers: response.headers,
+                raw: response
+            };
         } catch (error) {
             console.error(`API Request Error [${endpoint}]:`, error);
             throw error;
         }
     },
 
-    get(endpoint: string, options: FetchOptions = {}) {
+    async get(endpoint: string, options: FetchOptions = {}) {
         return this.request(endpoint, { ...options, method: "GET" });
     },
 
-    post(endpoint: string, body: any, options: FetchOptions = {}) {
+    async post(endpoint: string, body: any, options: FetchOptions = {}) {
         return this.request(endpoint, {
             ...options,
             method: "POST",
@@ -61,7 +94,7 @@ export const api = {
         });
     },
 
-    put(endpoint: string, body: any, options: FetchOptions = {}) {
+    async put(endpoint: string, body: any, options: FetchOptions = {}) {
         return this.request(endpoint, {
             ...options,
             method: "PUT",
@@ -69,7 +102,7 @@ export const api = {
         });
     },
 
-    delete(endpoint: string, options: FetchOptions = {}) {
+    async delete(endpoint: string, options: FetchOptions = {}) {
         return this.request(endpoint, { ...options, method: "DELETE" });
     }
 };

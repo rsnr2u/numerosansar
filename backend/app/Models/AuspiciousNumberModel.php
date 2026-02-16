@@ -10,5 +10,5 @@ class AuspiciousNumberModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $allowedFields = ['root_number', 'number', 'notes'];
+    protected $allowedFields = ['root_number', 'planet_name', 'friend_numbers', 'enemy_numbers', 'neutral_numbers'];
 }

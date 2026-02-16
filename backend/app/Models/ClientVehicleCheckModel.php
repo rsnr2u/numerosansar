@@ -13,6 +13,7 @@ class ClientVehicleCheckModel extends Model
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
+        'user_id',
         'client_id',
         'vehicle_number',
         'vehicle_type',

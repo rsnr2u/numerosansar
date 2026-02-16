@@ -86,7 +86,7 @@ export default function ClientDashboardPage() {
     ];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="container mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -109,61 +109,63 @@ export default function ClientDashboardPage() {
                 </div>
 
                 <div className="flex gap-2">
-                    <Link
-                        href={`/admin/clients/${client.id}/edit`}
-                        className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-xl transition-all font-bold border border-primary/20"
-                    >
-                        <Edit size={18} /> Edit Profile
-                    </Link>
+                    {typeof window !== 'undefined' && localStorage.getItem('user_role') === 'super_admin' && (
+                        <Link
+                            href={`/admin/clients/${client.id}/edit`}
+                            className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-xl transition-all font-bold border border-primary/20"
+                        >
+                            <Edit size={18} /> Edit Profile
+                        </Link>
+                    )}
                 </div>
             </div>
 
             {/* Profile & Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Contact Info */}
-                <div className="glass-card p-6 rounded-2xl border border-border space-y-4 bg-card">
-                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Contact Details</h3>
+                <div className="bg-white p-6 rounded-3xl border border-black/5 space-y-4 shadow-xl relative overflow-hidden">
+                    <h3 className="text-xs font-black text-black uppercase tracking-widest pl-1">Contact Details</h3>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black shadow-sm">
                                 <Phone size={16} />
                             </div>
-                            <span className="text-foreground text-sm">{client.mobile_number || "N/A"}</span>
+                            <span className="text-[#2D2926] text-sm font-medium">{client.mobile_number || "N/A"}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black shadow-sm">
                                 <Mail size={16} />
                             </div>
-                            <span className="text-foreground text-sm">{client.email_id || "N/A"}</span>
+                            <span className="text-[#2D2926] text-sm font-medium">{client.email_id || "N/A"}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black shadow-sm">
                                 <MapPin size={16} />
                             </div>
-                            <span className="text-foreground text-sm truncate">{client.city || "N/A"}, {client.state}</span>
+                            <span className="text-[#2D2926] text-sm font-medium truncate">{client.city || "N/A"}, {client.state}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Final Selections */}
-                <div className="md:col-span-2 glass-card p-6 rounded-2xl border border-border bg-card">
-                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-4">Confirmed Selections</h3>
+                <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative overflow-hidden">
+                    <h3 className="text-xs font-black text-black uppercase tracking-widest mb-4 pl-1">Confirmed Selections</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
                             <p className="text-[10px] uppercase font-black text-blue-500 mb-1">Calling Name</p>
-                            <p className="font-bold text-lg">{confirmedName || "Not Confirmed"}</p>
+                            <p className="font-bold text-lg text-[#2D2926]">{confirmedName || "Not Confirmed"}</p>
                         </div>
                         <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
                             <p className="text-[10px] uppercase font-black text-amber-500 mb-1">Business Name</p>
-                            <p className="font-bold text-lg">{confirmedBiz || "Not Confirmed"}</p>
+                            <p className="font-bold text-lg text-[#2D2926]">{confirmedBiz || "Not Confirmed"}</p>
                         </div>
                         <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
                             <p className="text-[10px] uppercase font-black text-green-500 mb-1">Mobile Number</p>
-                            <p className="font-bold text-lg">{confirmedMobile || "Not Confirmed"}</p>
+                            <p className="font-bold text-lg text-[#2D2926]">{confirmedMobile || "Not Confirmed"}</p>
                         </div>
                         <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/10">
                             <p className="text-[10px] uppercase font-black text-purple-500 mb-1">Vehicle Number</p>
-                            <p className="font-bold text-lg">{confirmedVehicle || "Not Confirmed"}</p>
+                            <p className="font-bold text-lg text-[#2D2926]">{confirmedVehicle || "Not Confirmed"}</p>
                         </div>
                     </div>
                 </div>
@@ -172,12 +174,12 @@ export default function ClientDashboardPage() {
             {/* Services Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {services.map((service, idx) => (
-                    <Link href={service.path} key={idx} className={`glass-card p-6 rounded-2xl border transition-all group ${service.color}`}>
+                    <Link href={service.path} key={idx} className={`bg-white p-6 rounded-3xl border border-black/5 shadow-lg transition-all group hover:shadow-2xl hover:-translate-y-1 ${service.color}`}>
                         <div className="mb-4">{service.icon}</div>
-                        <h3 className="text-lg font-bold mb-2 group-hover:translate-x-1 transition-transform">
+                        <h3 className="text-lg font-black text-[#2D2926] mb-2 tracking-tight">
                             {service.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground group-hover:text-foreground/80">
+                        <p className="text-xs text-[#2D2926]/60 font-medium group-hover:text-[#2D2926]/80">
                             {service.desc}
                         </p>
                     </Link>
@@ -227,37 +229,37 @@ function ClientHistorySection({ clientId, clientDob, initialHistory, onRefresh }
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="glass-card p-4 rounded-xl border border-border bg-card">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Names</p>
-                    <p className="text-2xl font-bold mt-1 text-blue-500">{nameChecks.length}</p>
+                <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-md">
+                    <p className="text-[10px] uppercase text-black font-black tracking-widest">Names</p>
+                    <p className="text-2xl font-black mt-1 text-blue-500">{nameChecks.length}</p>
                 </div>
-                <div className="glass-card p-4 rounded-xl border border-border bg-card">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Business</p>
-                    <p className="text-2xl font-bold mt-1 text-accent">{bizChecks.length}</p>
+                <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-md">
+                    <p className="text-[10px] uppercase text-black font-black tracking-widest">Business</p>
+                    <p className="text-2xl font-black mt-1 text-[#B91C1C]">{bizChecks.length}</p>
                 </div>
-                <div className="glass-card p-4 rounded-xl border border-border bg-card">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Mobile</p>
-                    <p className="text-2xl font-bold mt-1 text-green-500">{mobileChecks.length}</p>
+                <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-md">
+                    <p className="text-[10px] uppercase text-black font-black tracking-widest">Mobile</p>
+                    <p className="text-2xl font-black mt-1 text-green-500">{mobileChecks.length}</p>
                 </div>
-                <div className="glass-card p-4 rounded-xl border border-border bg-card">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Vehicle</p>
-                    <p className="text-2xl font-bold mt-1 text-purple-500">{vehicleChecks.length}</p>
+                <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-md">
+                    <p className="text-[10px] uppercase text-black font-black tracking-widest">Vehicle</p>
+                    <p className="text-2xl font-black mt-1 text-purple-500">{vehicleChecks.length}</p>
                 </div>
-                <div className="glass-card p-4 rounded-xl border border-border bg-card">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Confirmed</p>
-                    <p className="text-2xl font-bold mt-1 text-primary">{confirmedChecks.length}</p>
+                <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-md">
+                    <p className="text-[10px] uppercase text-black font-black tracking-widest">Confirmed</p>
+                    <p className="text-2xl font-black mt-1 text-[#2D2926]">{confirmedChecks.length}</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex flex-wrap bg-muted/50 p-1 rounded-xl w-fit gap-1">
+            <div className="flex flex-wrap bg-[#F3EFE9] p-1 rounded-xl w-fit gap-1">
                 {(['Name', 'Business', 'Mobile', 'Vehicle', 'Confirmed'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab
-                            ? 'bg-card text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`px-6 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab
+                            ? 'bg-white text-black shadow-sm'
+                            : 'text-[#2D2926]/40 hover:text-[#2D2926]'}`}
                     >
                         {tab === 'Confirmed' ? 'Final Choices' : `${tab}`}
                     </button>
@@ -265,7 +267,7 @@ function ClientHistorySection({ clientId, clientDob, initialHistory, onRefresh }
             </div>
 
             {/* Table */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="bg-white border border-black/5 rounded-3xl overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-muted text-xs uppercase text-muted-foreground font-bold">
@@ -333,20 +335,22 @@ function ClientHistorySection({ clientId, clientDob, initialHistory, onRefresh }
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right flex justify-end gap-2 items-center">
-                                            <a
-                                                href={item.type === 'Name'
-                                                    ? `/admin/check?name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
-                                                    : item.type === 'Business'
-                                                        ? `/admin/business-numerology?business_name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
-                                                        : item.type === 'Mobile'
-                                                            ? `/admin/mobile-numerology/analysis?number=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&edit_id=${item.id}`
-                                                            : `/admin/vehicle-numerology?vehicle=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
-                                                }
-                                                target="_blank"
-                                                className="px-3 py-1 bg-muted hover:bg-muted/80 rounded text-[10px] font-bold uppercase tracking-wider text-foreground transition-colors"
-                                            >
-                                                Edit
-                                            </a>
+                                            {typeof window !== 'undefined' && localStorage.getItem('user_role') === 'super_admin' && (
+                                                <a
+                                                    href={item.type === 'Name'
+                                                        ? `/admin/check?name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
+                                                        : item.type === 'Business'
+                                                            ? `/admin/business-numerology?business_name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
+                                                            : item.type === 'Mobile'
+                                                                ? `/admin/mobile-numerology/analysis?number=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&edit_id=${item.id}`
+                                                                : `/admin/vehicle-numerology?vehicle=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
+                                                    }
+                                                    target="_blank"
+                                                    className="px-3 py-1 bg-muted hover:bg-muted/80 rounded text-[10px] font-bold uppercase tracking-wider text-foreground transition-colors"
+                                                >
+                                                    Edit
+                                                </a>
+                                            )}
                                             {item.is_confirmed == 1 ? (
                                                 <span className="flex items-center gap-1 text-green-500 font-bold text-xs uppercase">
                                                     <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-black">✓</div>

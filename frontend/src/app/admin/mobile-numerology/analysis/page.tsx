@@ -189,6 +189,24 @@ export default function NewAnalysisPage() {
         }
     }, [dob, planetRelations, planets, loadingData]);
 
+    const searchClients = async (query: string) => {
+        if (!query) {
+            setClientResults([]);
+            return;
+        }
+        try {
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`http://localhost:8080/api/admin/clients/search?query=${encodeURIComponent(query)}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setClientResults(await res.json());
+            }
+        } catch (e) {
+            console.error("Search failed", e);
+        }
+    };
+
     const fetchClient = async (id: string) => {
         try {
             const token = localStorage.getItem("admin_token");
@@ -321,32 +339,31 @@ export default function NewAnalysisPage() {
             {/* Client Search */}
             <div className="relative z-50">
                 {selectedClient ? (
-                    <div className="premium-card p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 backdrop-blur-md flex items-center justify-between shadow-lg">
+                    <div className="p-4 rounded-xl border border-[#D4AF37]/20 bg-[#FAF7F2] flex items-center justify-between shadow-lg">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary rounded-xl text-black shadow-lg shadow-primary/20">
+                            <div className="p-3 bg-[#B91C1C] rounded-xl text-white shadow-lg shadow-red-500/20">
                                 <Users size={20} />
                             </div>
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-black text-foreground flex items-center gap-3 tracking-tight">
+                                <h2 className="text-xl font-black text-[#2D2926] flex items-center gap-3 tracking-tight">
                                     {selectedClient.full_name}
                                 </h2>
-                                <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-muted/30 rounded-lg">
-                                        <Calendar size={12} className="text-primary" />
+                                <div className="flex items-center gap-4 text-xs font-bold text-[#2D2926]/40 uppercase tracking-widest mt-1">
+                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-[#F3EFE9] rounded-lg">
+                                        <Calendar size={12} className="text-[#D4AF37]" />
                                         {new Date(selectedClient.dob).toLocaleDateString('en-GB')}
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 ) : (
-                    <div className="premium-card p-1.5 rounded-2xl border border-border bg-card/40 backdrop-blur-md flex items-center shadow-lg group focus-within:border-primary/50 transition-all">
-                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-focus-within:bg-primary group-focus-within:text-black transition-colors ml-1">
+                    <div className="bg-white p-1.5 rounded-2xl border border-black/5 flex items-center shadow-xl group focus-within:border-[#D4AF37]/50 transition-all">
+                        <div className="p-2.5 bg-[#D4AF37]/10 rounded-xl text-[#D4AF37] group-focus-within:bg-[#D4AF37] group-focus-within:text-white transition-colors ml-1">
                             <Users size={18} />
                         </div>
                         <input
-                            className="bg-transparent px-4 py-2 text-foreground w-full outline-none placeholder:text-muted-foreground font-medium"
+                            className="bg-transparent px-4 py-2 text-[#2D2926] w-full outline-none placeholder:text-[#2D2926]/30 font-medium"
                             placeholder="Search existing client..."
                             value={clientSearch}
                             onChange={(e) => { setClientSearch(e.target.value); searchClients(e.target.value); }}
@@ -374,14 +391,14 @@ export default function NewAnalysisPage() {
             </div>
 
             {/* Analysis Form */}
-            <div className={`glass-card p-8 rounded-2xl border ${editingId ? 'border-primary/50 bg-primary/5' : 'border-border bg-card'} relative overflow-hidden`} >
+            <div className={`p-6 rounded-3xl border ${editingId ? 'border-[#D4AF37]/30 bg-[#FAF7F2]' : 'border-black/5 bg-white shadow-xl'} relative overflow-hidden`} >
                 <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Smartphone size={120} />
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <Smartphone size={16} className="text-accent" />
+                        <label className="text-xs font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-2 pl-1">
+                            <Smartphone size={16} />
                             Mobile Number
                         </label>
                         <input
@@ -390,16 +407,16 @@ export default function NewAnalysisPage() {
                             onChange={(e) => setMobile(e.target.value)}
                             required
                             placeholder="Enter 10 digit mobile number"
-                            className="w-full bg-input border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:border-accent transition-all font-mono text-lg"
+                            className="w-full bg-[#F3EFE9] border border-black/5 rounded-2xl px-5 py-4 text-[#2D2926] focus:outline-none focus:border-[#D4AF37]/50 transition-all font-mono text-xl shadow-inner"
                         />
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end pt-2">
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg active:scale-95 ${loading
-                                ? "bg-muted text-muted-foreground cursor-wait"
-                                : "bg-primary text-black hover:bg-primary/90 hover:shadow-primary/20"
+                            className={`px-10 py-4 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl active:scale-95 text-xs ${loading
+                                ? "bg-muted text-[#2D2926]/40 cursor-wait"
+                                : "bg-gradient-to-r from-[#D4AF37] to-[#B91C1C] text-white hover:shadow-2xl hover:shadow-red-500/20"
                                 }`}
                         >
                             {loading ? (
@@ -429,8 +446,8 @@ export default function NewAnalysisPage() {
 
                     {/* Saved History */}
                     {showHistory && history.length > 0 && (
-                        <div className="premium-card p-6 rounded-[2rem] border border-border bg-card/60 backdrop-blur-md">
-                            <h2 className="text-xl font-black text-foreground mb-6 flex items-center gap-3 tracking-tight">
+                        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl">
+                            <h2 className="text-xl font-black text-[#2D2926] mb-6 flex items-center gap-3 tracking-tight">
                                 <span className="p-2 bg-blue-500/10 rounded-xl text-blue-500"><History size={20} /></span>
                                 Saved Records
                             </h2>
@@ -443,12 +460,12 @@ export default function NewAnalysisPage() {
                                             setEditingId(record.id);
                                             checkMobile(record.mobile_number, false);
                                         }}
-                                        className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group hover:border-blue-500/50 ${editingId === record.id ? 'bg-blue-500/10 border-blue-500/30' : 'bg-muted/30 border-border/50'}`}
+                                        className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group hover:border-[#D4AF37]/50 hover:shadow-lg ${editingId === record.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]/30' : 'bg-[#FAF7F2] border-black/5'}`}
                                     >
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-foreground group-hover:text-blue-500 transition-colors uppercase tracking-tight">{record.mobile_number}</span>
+                                            <span className="font-black text-[#2D2926] group-hover:text-[#D4AF37] transition-colors uppercase tracking-tight text-sm">{record.mobile_number}</span>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{record.Compound_number} / {record.total_number}</span>
+                                                <span className="text-[9px] font-black text-[#D4AF37]/60 uppercase tracking-widest">{record.Compound_number} / {record.total_number}</span>
                                             </div>
                                         </div>
                                     </button>

@@ -33,7 +33,7 @@ class AuthFilter implements FilterInterface
             return;
         }
 
-        $key = env('JWT_SECRET') ?: getenv('JWT_SECRET') ?: $_ENV['JWT_SECRET'] ?: $_SERVER['JWT_SECRET'] ?: '';
+        $key = getenv('JWT_SECRET') ?: env('JWT_SECRET') ?: 'default_fallback_secret_change_me';
         $header = $request->header('Authorization');
 
         if (!$header) {
@@ -50,7 +50,14 @@ class AuthFilter implements FilterInterface
 
         try {
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
+            // Store user info in request for controllers to access
+            $request->userData = [
+                'uid' => $decoded->uid,
+                'username' => $decoded->username,
+                'role' => $decoded->role
+            ];
         } catch (Exception $e) {
+            log_message('error', '[AuthFilter] JWT Decode Error: ' . $e->getMessage() . ' | Token: ' . substr($token, 0, 10) . '...');
             return service('response')->setJSON([
                 'message' => 'Invalid Token',
                 'error' => $e->getMessage()

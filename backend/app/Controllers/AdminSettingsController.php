@@ -25,6 +25,11 @@ class AdminSettingsController extends BaseController
 
     public function update()
     {
+        $userData = $this->request->userData ?? null;
+        if (!$userData || $userData['role'] !== 'super_admin') {
+            return $this->failForbidden('Only Super Admin can change settings');
+        }
+
         $model = new SettingsModel();
         $input = $this->request->getJSON(true); // Expect JSON object { 'site_title': 'New Title', ... }
 

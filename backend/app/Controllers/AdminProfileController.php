@@ -15,7 +15,7 @@ class AdminProfileController extends BaseController
     public function index()
     {
         // Get user from JWT (Middleware likely validates, but we need ID)
-        $key = getenv('JWT_SECRET');
+        $key = getenv('JWT_SECRET') ?: env('JWT_SECRET') ?: 'default_fallback_secret_change_me';
         $header = $this->request->getServer('HTTP_AUTHORIZATION');
         if (!$header)
             return $this->failUnauthorized('No token');
@@ -40,7 +40,7 @@ class AdminProfileController extends BaseController
 
     public function update()
     {
-        $key = getenv('JWT_SECRET');
+        $key = getenv('JWT_SECRET') ?: env('JWT_SECRET') ?: 'default_fallback_secret_change_me';
         $header = $this->request->getServer('HTTP_AUTHORIZATION');
         if (!$header)
             return $this->failUnauthorized('No token');
@@ -71,7 +71,7 @@ class AdminProfileController extends BaseController
 
     public function changePassword()
     {
-        $key = getenv('JWT_SECRET');
+        $key = getenv('JWT_SECRET') ?: env('JWT_SECRET') ?: 'default_fallback_secret_change_me';
         $header = $this->request->getServer('HTTP_AUTHORIZATION');
         if (!$header)
             return $this->failUnauthorized('No token');

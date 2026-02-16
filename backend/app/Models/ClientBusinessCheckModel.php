@@ -14,6 +14,7 @@ class ClientBusinessCheckModel extends Model
     protected $protectFields = true;
     protected $allowedFields = [
         'client_id',
+        'business_sector_id',
         'business_name',
         'original_name',
         'chaldean_compound',

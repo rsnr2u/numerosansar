@@ -184,23 +184,23 @@ export default function MobileNumerologyPage() {
             {/* Search Overlay / Client Display */}
             <div className="relative z-50">
                 {selectedClient ? (
-                    <div className="premium-card p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 backdrop-blur-md flex items-center justify-between shadow-lg">
+                    <div className="p-4 rounded-xl border border-[#10B981]/20 bg-[#FAF7F2] flex items-center justify-between shadow-lg">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary rounded-xl text-black shadow-lg shadow-primary/20">
+                            <div className="p-3 bg-astro-gradient rounded-xl text-white shadow-lg shadow-red-500/20">
                                 <Users size={20} />
                             </div>
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-black text-foreground flex items-center gap-3 tracking-tight">
+                                <h2 className="text-xl font-black text-[#2D2926] flex items-center gap-3 tracking-tight">
                                     {selectedClient.full_name}
                                     {selectedClient.calling_name && (
-                                        <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full font-bold uppercase tracking-tighter">
+                                        <span className="text-[10px] px-2 py-0.5 bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 rounded-full font-bold uppercase tracking-tighter">
                                             {selectedClient.calling_name}
                                         </span>
                                     )}
                                 </h2>
-                                <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-muted/30 rounded-lg">
-                                        <Calendar size={12} className="text-primary" />
+                                <div className="flex items-center gap-4 text-xs font-bold text-[#2D2926]/40 uppercase tracking-widest mt-1">
+                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-[#F3EFE9] rounded-lg">
+                                        <Calendar size={12} className="text-[#10B981]" />
                                         {new Date(selectedClient.dob).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                     </span>
                                 </div>
@@ -208,12 +208,12 @@ export default function MobileNumerologyPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="premium-card p-1.5 rounded-2xl border border-border bg-card/40 backdrop-blur-md flex items-center shadow-lg group focus-within:border-primary/50 transition-all">
-                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-focus-within:bg-primary group-focus-within:text-black transition-colors ml-1">
+                    <div className="bg-white p-1.5 rounded-2xl border border-black/5 flex items-center shadow-xl group focus-within:border-[#10B981]/50 transition-all">
+                        <div className="p-2.5 bg-[#10B981]/10 rounded-xl text-[#10B981] group-focus-within:bg-[#10B981] group-focus-within:text-white transition-colors ml-1">
                             <Users size={18} />
                         </div>
                         <input
-                            className="bg-transparent px-4 py-2 text-foreground w-full outline-none placeholder:text-muted-foreground font-medium"
+                            className="bg-transparent px-4 py-2 text-[#2D2926] w-full outline-none placeholder:text-[#2D2926]/30 font-medium"
                             placeholder="Select a client to view records..."
                             value={clientSearch}
                             onChange={(e) => { setClientSearch(e.target.value); searchClients(e.target.value); }}
@@ -252,14 +252,14 @@ export default function MobileNumerologyPage() {
                     {/* Toggle History Button */}
                     <button
                         onClick={() => setShowHistory(!showHistory)}
-                        className={`w-full py-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all ${showHistory ? 'bg-primary/5 border-primary/30 text-primary' : 'bg-muted/10 border-border hover:border-primary/30 text-muted-foreground hover:text-primary'}`}
+                        className={`w-full py-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all ${showHistory ? 'bg-[#10B981]/5 border-[#10B981]/30 text-[#10B981]' : 'bg-[#F3EFE9] border-black/5 hover:border-[#10B981]/30 text-[#2D2926]/40 hover:text-[#10B981]'}`}
                     >
                         {showHistory ? <><EyeOff size={16} /> Hide Saved Records</> : <><History size={16} /> Show Saved Records ({history.length})</>}
                     </button>
 
                     {showHistory && history.length > 0 ? (
-                        <div className="premium-card p-6 rounded-[2rem] border border-border bg-card/60 backdrop-blur-md">
-                            <h2 className="text-xl font-black text-foreground mb-6 flex items-center gap-3 tracking-tight">
+                        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl">
+                            <h2 className="text-xl font-black text-[#2D2926] mb-6 flex items-center gap-3 tracking-tight">
                                 <span className="p-2 bg-blue-500/10 rounded-xl text-blue-500"><History size={20} /></span>
                                 Saved Records
                             </h2>
@@ -268,10 +268,10 @@ export default function MobileNumerologyPage() {
                                     <button
                                         key={record.id}
                                         onClick={(e) => navigateToEdit(record, e)}
-                                        className="w-full text-left p-4 rounded-2xl border bg-muted/30 border-border/50 transition-all flex items-center justify-between group hover:border-blue-500/50"
+                                        className="w-full text-left p-4 rounded-2xl border bg-[#FAF7F2] border-black/5 transition-all flex items-center justify-between group hover:border-blue-500/50 hover:shadow-lg"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-foreground group-hover:text-blue-500 transition-colors uppercase tracking-tight">{record.mobile_number}</span>
+                                            <span className="font-black text-[#2D2926] group-hover:text-blue-500 transition-colors uppercase tracking-tight text-sm">{record.mobile_number}</span>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{record.chaldean_compound} / {record.chaldean_root}</span>
                                             </div>

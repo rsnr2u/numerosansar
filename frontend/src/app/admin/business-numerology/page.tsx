@@ -7,7 +7,6 @@ import {
     Search,
     Star,
     Save,
-    Sparkles,
     Database,
     Users,
     History,
@@ -15,11 +14,11 @@ import {
     CheckCircle,
     Briefcase,
     Printer,
+    Sparkles,
     PlusCircle,
-    Download
+    Download,
 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import SystemCard from "@/components/SystemCard";
 
 // --- Types ---
 interface Planet {
@@ -56,6 +55,8 @@ const DANGEROUS_NUMBERS = [10, 12, 13, 16, 18];
 interface SystemResult {
     system: "Chaldean" | "Pythagorean";
     compound: number;
+    single: number;
+    planet?: string;
     meaning?: string;
     description?: string;
     resultType?: string; // For coloring
@@ -99,94 +100,6 @@ const parseNumberList = (str: string | undefined): number[] => {
 
 const isVowel = (char: string) => ['A', 'E', 'I', 'O', 'U'].includes(char.toUpperCase());
 
-const getResultColor = (result: string | undefined) => {
-    if (!result) return "border-border/50";
-    const r = result.toLowerCase();
-    if (r.includes("excellent")) return "border-green-500";
-    if (r.includes("super")) return "border-blue-500";
-    if (r.includes("very good") || r.includes("good")) return "border-primary";
-    if (r.includes("not good") || r.includes("bad")) return "border-red-500";
-    return "border-border/50";
-};
-
-const getBadgeColor = (result: string | undefined) => {
-    if (!result) return "bg-muted text-muted-foreground";
-    const r = result.toLowerCase();
-    if (r.includes("excellent")) return "bg-green-500/10 text-green-500 border-green-500/30 font-bold";
-    if (r.includes("super")) return "bg-blue-500/10 text-blue-500 border-blue-500/30 font-bold";
-    if (r.includes("very good") || r.includes("good")) return "bg-primary/10 text-primary border-primary/30 font-bold";
-    if (r.includes("not good") || r.includes("bad")) return "bg-red-500/10 text-red-500 border-red-500/30 font-bold";
-    return "bg-muted text-muted-foreground";
-};
-
-// --- Components ---
-const SystemCard = ({ result }: { result: SystemResult }) => {
-    const isChaldean = result.system === "Chaldean";
-    const bgClass = isChaldean
-        ? "bg-[#EEF2FF] border-[#E0E7FF] dark:bg-blue-900/20 dark:border-blue-800"
-        : "bg-[#FFFBEB] border-[#FEF3C7] dark:bg-amber-900/20 dark:border-amber-800";
-
-    const baseColorClass = isChaldean ? "text-blue-600" : "text-amber-600";
-    const statusBorder = getResultColor(result.resultType);
-
-    return (
-        <motion.div
-            whileHover={{ y: -5, scale: 1.01 }}
-            className={`p-8 flex flex-col items-center text-center relative overflow-hidden group border-2 rounded-[2.5rem] ${bgClass} ${statusBorder} transition-all duration-500 shadow-sm hover:shadow-xl`}
-        >
-            <div className="z-10 relative w-full flex flex-col items-center">
-                <h3 className={`text-[10px] uppercase tracking-[0.3em] font-black mb-4 opacity-50 ${baseColorClass}`}>
-                    {result.system} System
-                </h3>
-
-                <div className="mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <span className="text-[9px] opacity-30 uppercase tracking-[0.3em] font-bold block mb-1">Composite</span>
-                    <span className="text-7xl font-black tracking-tighter drop-shadow-2xl no-print-shadow">{result.compound}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 w-full border-t border-current/10 pt-5 mb-6">
-                    <div className="flex flex-col items-center">
-                        <span className="opacity-30 text-[9px] uppercase font-bold tracking-widest px-2">Root Value</span>
-                        <span className="text-3xl font-black mt-1">{result.single}</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <span className="opacity-30 text-[9px] uppercase font-bold tracking-widest px-2">Ruler</span>
-                        <span className={`text-2xl font-black mt-1 flex items-center gap-2 ${baseColorClass}`}>
-                            <Star size={18} className="fill-current animate-pulse opacity-70" />
-                            <span className="text-foreground">{result.planet || "-"}</span>
-                        </span>
-                    </div>
-                </div>
-
-                <div className="w-full border-t border-current/10 pt-5 mb-6">
-                    <p className="text-sm font-bold text-foreground/70 tracking-tight leading-relaxed italic">
-                        {result.meaning}
-                    </p>
-                </div>
-
-                {result.resultType && (
-                    <div className="mt-4 w-full">
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className={`py-3 rounded-[1.25rem] text-[11px] font-black uppercase tracking-[0.3em] border-2 shadow-2xl ${getBadgeColor(result.resultType)}`}
-                        >
-                            {result.resultType}
-                        </motion.div>
-                    </div>
-                )}
-            </div>
-
-            {/* BG Decoration */}
-            <div className={`absolute -bottom-10 -right-10 opacity-[0.06] rotate-12 transition-all duration-700 group-hover:rotate-0 group-hover:scale-125 ${baseColorClass}`}>
-                <Database size={140} />
-            </div>
-
-            {/* Glossy Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
-        </motion.div>
-    );
-};
 
 export default function BusinessNumerology() {
     // --- State ---
@@ -206,6 +119,10 @@ export default function BusinessNumerology() {
     const [planetRelations, setPlanetRelations] = useState<PlanetRelation[]>([]);
     const [luckyNumbers, setLuckyNumbers] = useState<number[]>([]);
     const [birthData, setBirthData] = useState<any>(null);
+
+    // Sectors
+    const [sectors, setSectors] = useState<any[]>([]);
+    const [selectedSectorId, setSelectedSectorId] = useState<number | null>(null);
 
     // Search
     const [clientSearch, setClientSearch] = useState("");
@@ -233,6 +150,7 @@ export default function BusinessNumerology() {
                     fetch(`${BASE_URL}/admin/meanings`, { headers: { Authorization: `Bearer ${token}` } }),
                     fetch(`${BASE_URL}/admin/planets`, { headers: { Authorization: `Bearer ${token}` } }),
                     fetch(`${BASE_URL}/admin/planet-relations`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${BASE_URL}/admin/business-lucky-numbers`, { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
 
                 // Check for Auth failure
@@ -243,13 +161,14 @@ export default function BusinessNumerology() {
                     return;
                 }
 
-                const [lRes, cRes, pRes, prRes] = responses;
+                const [lRes, cRes, pRes, prRes, sRes] = responses;
 
-                if (lRes.ok && cRes.ok && pRes.ok && prRes.ok) {
+                if (lRes.ok && cRes.ok && pRes.ok && prRes.ok && sRes.ok) {
                     setLettersMap(await lRes.json());
                     setCompounds(await cRes.json());
                     setPlanets(await pRes.json());
                     setPlanetRelations(await prRes.json());
+                    setSectors(await sRes.json());
                 }
             } catch (e) {
                 console.error("Failed to load data", e);
@@ -326,14 +245,28 @@ export default function BusinessNumerology() {
     };
 
     // Lookup Maps
-    const { chMap, pyMap } = useMemo(() => {
+    const { chMap, pyMap, harmonicBridges } = useMemo(() => {
         const c: Record<string, number> = {};
         const p: Record<string, number> = {};
+        const bridges: Record<number, string[]> = {};
+
         lettersMap.forEach(l => {
-            c[l.letter] = Number(l.chaldean_number);
-            p[l.letter] = Number(l.pythagorean_number);
+            const chNum = Number(l.chaldean_number);
+            const pyNum = Number(l.pythagorean_number);
+            c[l.letter] = chNum;
+            p[l.letter] = pyNum;
+
+            if (chNum === pyNum && chNum > 0) {
+                if (!bridges[chNum]) bridges[chNum] = [];
+                bridges[chNum].push(l.letter);
+            }
         });
-        return { chMap: c, pyMap: p };
+
+        const sortedBridges = Object.entries(bridges)
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([num, letters]) => ({ num: Number(num), letters }));
+
+        return { chMap: c, pyMap: p, harmonicBridges: sortedBridges };
     }, [lettersMap]);
 
     // --- Core Logic ---
@@ -392,6 +325,7 @@ export default function BusinessNumerology() {
         });
 
     }, [businessName, loadingData, chMap, pyMap, compounds, planets]);
+
 
     // Lucky Numbers Logic
     useEffect(() => {
@@ -461,7 +395,8 @@ export default function BusinessNumerology() {
                     id: checkId,
                     business_name: businessName,
                     original_name: originalName,
-                    client_id: clientId
+                    client_id: clientId,
+                    business_sector_id: selectedSectorId
                 })
             });
             const data = await res.json();
@@ -476,6 +411,7 @@ export default function BusinessNumerology() {
             setIsSaving(false);
         }
     };
+
 
     const confirmBusiness = async () => {
         if (!checkId) return;
@@ -498,7 +434,10 @@ export default function BusinessNumerology() {
         }
     };
 
-    const downloadPDF = () => {
+    const downloadPDF = async () => {
+        const { default: jsPDF } = await import("jspdf");
+        const { default: autoTable } = await import("jspdf-autotable");
+
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.width;
 
@@ -637,20 +576,30 @@ export default function BusinessNumerology() {
         doc.save(`${selectedClient?.full_name}_Business_Analysis.pdf`);
     };
 
-    const resetAnalysis = () => {
+    const resetAnalysis = (keepClient = false) => {
         setBusinessName("");
-        setOriginalName("");
+        if (!keepClient) {
+            setOriginalName("");
+            setSelectedClient(null);
+        }
         setCheckId(null);
         setConfirmed(false);
         setBreakdown([]);
         setChaldeanRes(null);
         setPythagoreanRes(null);
         setShowListing(false);
+
+        // Clear URL parameters
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('check_id');
+        params.delete('business');
+        if (!keepClient) params.delete('client_id');
+        router.replace(`?${params.toString()}`);
     };
 
     if (showListing && selectedClient) {
         return (
-            <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <div className="container mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
                         <button onClick={() => router.back()} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
@@ -667,7 +616,7 @@ export default function BusinessNumerology() {
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowListing(false)}
+                        onClick={() => resetAnalysis(true)}
                         className="px-6 py-2.5 font-bold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
                     >
                         <PlusCircle size={18} /> New Analysis
@@ -681,10 +630,11 @@ export default function BusinessNumerology() {
                             onClick={() => {
                                 setBusinessName(record.name_value || record.business_name);
                                 setOriginalName(record.original_name || "");
+                                setSelectedSectorId(record.business_sector_id || null);
                                 setCheckId(record.id);
                                 setShowListing(false);
                             }}
-                            className="w-full text-left p-6 rounded-[2rem] border bg-card/60 backdrop-blur-md border-border/50 hover:border-primary/50 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
+                            className="w-full text-left p-4 rounded-2xl border bg-white border-black/5 hover:border-[#D4AF37]/50 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
                         >
                             <div className="flex flex-col gap-1">
                                 <span className="text-xl font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
@@ -716,352 +666,460 @@ export default function BusinessNumerology() {
     }
 
     return (
-        <>
-            <div className="max-w-7xl mx-auto space-y-8 pb-20">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-5">
-                        <button onClick={() => {
-                            if (showListing || (history.length > 0 && !showListing)) {
-                                if (!showListing) setShowListing(true);
-                                else router.back();
-                            } else {
-                                router.back();
-                            }
-                        }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div>
-                            <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
-                                <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                    <Briefcase size={24} />
-                                </span>
-                                {checkId ? 'Edit Analysis' : 'Business Numerology'}
-                            </h1>
-                            <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Evaluate business name vibrations</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-4 items-center">
-                        {(history.length > 0 && !checkId) && (
-                            <button
-                                onClick={() => {
-                                    setBusinessName("");
-                                    setCheckId(null);
-                                    setShowListing(true);
-                                }}
-                                className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-                            >
-                                <History size={18} /> View Saved
-                            </button>
-                        )}
-
+        <div className="container mx-auto space-y-8 pb-20">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="flex items-center gap-5">
+                    <button onClick={() => {
+                        if (showListing || (history.length > 0 && !showListing)) {
+                            if (!showListing) setShowListing(true);
+                            else router.back();
+                        } else {
+                            router.back();
+                        }
+                    }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div>
+                        <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
+                            <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                <Briefcase size={24} />
+                            </span>
+                            {checkId ? 'Edit Analysis' : 'Business Numerology'}
+                        </h1>
+                        <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Evaluate business name vibrations</p>
                     </div>
                 </div>
-
-                <div className="flex gap-3 items-center">
-                    <button
-                        onClick={resetAnalysis}
-                        className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-                    >
-                        <PlusCircle size={18} /> New Analysis
-                    </button>
-                    <div className="w-px h-6 bg-border mx-1" />
-
+                <div className="flex gap-4 items-center">
+                    {(history.length > 0 && !checkId) && (
+                        <button
+                            onClick={() => {
+                                setBusinessName("");
+                                setCheckId(null);
+                                setShowListing(true);
+                            }}
+                            className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+                        >
+                            <History size={18} /> View Saved
+                        </button>
+                    )}
                     {businessName && (
                         <button onClick={saveToBackend} disabled={isSaving} className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${isSaving ? "bg-muted text-muted-foreground cursor-wait" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
                             <Save size={18} /> {isSaving ? 'Saving...' : (checkId ? 'Update Record' : 'Save to Records')}
                         </button>
                     )}
-
-                    {chaldeanRes && (
-                        <button
-                            onClick={downloadPDF}
-                            className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-primary shadow-sm hover:shadow-md active:scale-95"
-                        >
-                            <Download size={18} /> Download PDF
-                        </button>
-                    )}
-                    {checkId && (
-                        <button onClick={confirmBusiness} disabled={confirmed} className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${confirmed ? "bg-green-500/10 text-green-500 border border-green-500/20 cursor-default" : "bg-gradient-primary text-white glow-on-hover"}`}>
-                            {confirmed ? "✓ Confirmed" : "✅ Confirm Business Name"}
-                        </button>
-                    )}
                 </div>
+            </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-                    <div className="xl:col-span-2 space-y-8">
-                        {/* Search Overlay / Client Display */}
-                        <div className="relative z-50">
-                            {selectedClient ? (
-                                <div className="premium-card p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 backdrop-blur-md flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-primary rounded-xl text-black shadow-lg shadow-primary/20">
-                                            <Users size={20} />
+            <div className="flex gap-3 items-center">
+                {chaldeanRes && (
+                    <button
+                        onClick={downloadPDF}
+                        className="px-4 py-2.5 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-sm text-primary shadow-sm hover:shadow-md active:scale-95"
+                    >
+                        <Download size={18} /> Download PDF
+                    </button>
+                )}
+                {checkId && (
+                    <button onClick={confirmBusiness} disabled={confirmed} className={`px-6 py-2.5 font-black rounded-xl transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl active:scale-95 ${confirmed ? "bg-green-500/10 text-green-500 border border-green-500/20 cursor-default" : "bg-gradient-primary text-white glow-on-hover"}`}>
+                        {confirmed ? "✓ Confirmed" : "✅ Confirm Business Name"}
+                    </button>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+                <div className="xl:col-span-2 space-y-8">
+                    {/* Search Overlay / Client Display */}
+                    <div className="">
+                        {selectedClient ? (
+                            <div className="p-4 rounded-xl border border-[#10B981]/20 bg-[#FAF7F2] flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-astro-gradient rounded-xl text-white shadow-lg shadow-primary/20">
+                                        <Users size={20} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] text-primary font-black uppercase tracking-widest opacity-70">Selected Client</span>
+                                            <div className="h-1 w-1 rounded-full bg-primary/30" />
+                                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{new Date(selectedClient.dob).toLocaleDateString()}</span>
                                         </div>
+                                        <h2 className="text-xl font-black text-foreground tracking-tight leading-none mt-1">
+                                            {selectedClient.full_name}
+                                            {selectedClient.calling_name && (
+                                                <span className="text-primary ml-2 opacity-80 font-bold">({selectedClient.calling_name})</span>
+                                            )}
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="premium-card p-1.5 rounded-2xl border border-border bg-card/40 backdrop-blur-md flex items-center shadow-lg group focus-within:border-primary/50 transition-all">
+                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-focus-within:bg-primary group-focus-within:text-black transition-colors ml-1">
+                                    <Users size={18} />
+                                </div>
+                                <input
+                                    className="bg-transparent px-4 py-2 text-foreground w-full outline-none placeholder:text-muted-foreground font-medium"
+                                    placeholder="Search existing client..."
+                                    value={clientSearch}
+                                    onChange={(e) => { setClientSearch(e.target.value); searchClients(e.target.value); }}
+                                    onFocus={() => setShowDropdown(true)}
+                                />
+                            </div>
+                        )}
+                        {showDropdown && clientResults.length > 0 && !selectedClient && (
+                            <div className="absolute top-full left-0 w-full mt-3 bg-card border border-border rounded-2xl max-h-72 overflow-y-auto shadow-2xl z-50 backdrop-blur-xl divide-y divide-border/50 animate-in fade-in slide-in-from-top-2">
+                                {clientResults.map(c => (
+                                    <button key={c.id} onClick={() => {
+                                        setSelectedClient(c);
+                                        setClientSearch("");
+                                        setShowDropdown(false);
+                                        const params = new URLSearchParams(searchParams.toString());
+                                        params.set('client_id', String(c.id));
+                                        router.replace(`?${params.toString()}`);
+                                        fetchHistory(String(c.id));
+                                    }} className="w-full text-left p-4 hover:bg-primary/5 flex justify-between items-center group transition-colors">
                                         <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] text-primary font-black uppercase tracking-widest opacity-70">Selected Client</span>
-                                                <div className="h-1 w-1 rounded-full bg-primary/30" />
-                                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{new Date(selectedClient.dob).toLocaleDateString()}</span>
-                                            </div>
-                                            <h2 className="text-xl font-black text-foreground tracking-tight leading-none mt-1">
-                                                {selectedClient.full_name}
-                                                {selectedClient.calling_name && (
-                                                    <span className="text-primary ml-2 opacity-80 font-bold">({selectedClient.calling_name})</span>
-                                                )}
-                                            </h2>
+                                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">{c.full_name}</span>
                                         </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="premium-card p-1.5 rounded-2xl border border-border bg-card/40 backdrop-blur-md flex items-center shadow-lg group focus-within:border-primary/50 transition-all">
-                                    <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-focus-within:bg-primary group-focus-within:text-black transition-colors ml-1">
-                                        <Users size={18} />
-                                    </div>
-                                    <input
-                                        className="bg-transparent px-4 py-2 text-foreground w-full outline-none placeholder:text-muted-foreground font-medium"
-                                        placeholder="Search existing client..."
-                                        value={clientSearch}
-                                        onChange={(e) => { setClientSearch(e.target.value); searchClients(e.target.value); }}
-                                        onFocus={() => setShowDropdown(true)}
-                                    />
-                                </div>
-                            )}
-                            {showDropdown && clientResults.length > 0 && !selectedClient && (
-                                <div className="absolute top-full left-0 w-full mt-3 bg-card border border-border rounded-2xl max-h-72 overflow-y-auto shadow-2xl z-50 backdrop-blur-xl divide-y divide-border/50 animate-in fade-in slide-in-from-top-2">
-                                    {clientResults.map(c => (
-                                        <button key={c.id} onClick={() => {
-                                            setSelectedClient(c);
-                                            setClientSearch("");
-                                            setShowDropdown(false);
-                                            const params = new URLSearchParams(searchParams.toString());
-                                            params.set('client_id', String(c.id));
-                                            router.replace(`?${params.toString()}`);
-                                            fetchHistory(String(c.id));
-                                        }} className="w-full text-left p-4 hover:bg-primary/5 flex justify-between items-center group transition-colors">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-foreground group-hover:text-primary transition-colors">{c.full_name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-muted-foreground">{new Date(c.dob).toLocaleDateString()}</span>
-                                                <ArrowLeft size={14} className="rotate-180 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                                            </div>
-                                        </button>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-mono text-muted-foreground">{new Date(c.dob).toLocaleDateString()}</span>
+                                            <ArrowLeft size={14} className="rotate-180 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative overflow-hidden">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                            {/* Business Sector Dropdown */}
+                            <div className="space-y-2 group">
+                                <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center gap-2 mb-1 pl-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-muted group-focus-within:bg-muted-foreground transition-colors" />
+                                    Business Type / Sector
+                                </label>
+                                <select
+                                    value={selectedSectorId || ""}
+                                    onChange={(e) => setSelectedSectorId(e.target.value ? Number(e.target.value) : null)}
+                                    className="w-full bg-input/20 border border-border p-3 rounded-xl text-foreground outline-none text-sm focus:border-primary/30 focus:bg-input/40 transition-all font-medium"
+                                >
+                                    <option value="">Select Sector...</option>
+                                    {sectors.map(s => (
+                                        <option key={s.id} value={s.id}>{s.sector_name}</option>
                                     ))}
-                                </div>
-                            )}
-                        </div>
+                                </select>
+                            </div>
 
-                        <div className="premium-card p-6 rounded-[2rem] border border-border bg-card/60 backdrop-blur-sm relative overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                                {/* Original Business Name */}
-                                <div className="space-y-2 group">
-                                    <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center gap-2 mb-1 pl-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-muted group-focus-within:bg-muted-foreground transition-colors" />
-                                        Original Business Name
-                                    </label>
+                            {/* Original Business Name */}
+                            <div className="space-y-2 group">
+                                <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black flex items-center gap-2 mb-1 pl-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-muted group-focus-within:bg-muted-foreground transition-colors" />
+                                    Original Business Name
+                                </label>
+                                <input
+                                    value={originalName}
+                                    onChange={(e) => setOriginalName(e.target.value)}
+                                    className="w-full bg-input/20 border border-border p-3 rounded-xl text-foreground outline-none text-sm focus:border-primary/30 focus:bg-input/40 transition-all font-medium"
+                                    placeholder="Current registered name..."
+                                />
+                            </div>
+
+                            {/* Proposed Business Name */}
+                            <div className="space-y-2 group">
+                                <label className="text-[9px] uppercase tracking-[0.2em] text-primary font-black flex items-center gap-2 mb-1 pl-1">
+                                    <Sparkles size={10} className="text-primary animate-pulse" />
+                                    Proposed Business Name
+                                </label>
+                                <div className="relative">
                                     <input
-                                        value={originalName}
-                                        onChange={(e) => setOriginalName(e.target.value)}
-                                        className="w-full bg-input/20 border border-border p-3 rounded-xl text-foreground outline-none text-sm focus:border-primary/30 focus:bg-input/40 transition-all font-medium"
-                                        placeholder="Current registered name..."
+                                        value={businessName}
+                                        onChange={(e) => setBusinessName(e.target.value.toUpperCase())}
+                                        className="w-full bg-primary/5 border-2 border-primary/30 p-2.5 rounded-xl text-xl font-black text-foreground outline-none shadow-inner focus:border-primary focus:shadow-[0_0_15px_rgba(var(--primary-rgb),0.2)] transition-all placeholder:text-muted-foreground/30"
+                                        placeholder="ENTER NAME..."
                                     />
-                                </div>
-
-                                {/* Proposed Business Name */}
-                                <div className="space-y-2 group">
-                                    <label className="text-[9px] uppercase tracking-[0.2em] text-primary font-black flex items-center gap-2 mb-1 pl-1">
-                                        <Sparkles size={10} className="text-primary animate-pulse" />
-                                        Proposed Business Name
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            value={businessName}
-                                            onChange={(e) => setBusinessName(e.target.value.toUpperCase())}
-                                            className="w-full bg-primary/5 border-2 border-primary/30 p-2.5 rounded-xl text-xl font-black text-foreground outline-none shadow-inner focus:border-primary focus:shadow-[0_0_15px_rgba(var(--primary-rgb),0.2)] transition-all placeholder:text-muted-foreground/30"
-                                            placeholder="ENTER NAME TO ANALYZE..."
-                                        />
-                                        <div className="absolute right-3 bottom-3 text-[8px] text-muted-foreground font-black uppercase tracking-widest opacity-40">
+                                    <div className="absolute right-3 bottom-1/2 translate-y-1/2 flex items-center gap-2">
+                                        <div className="text-[8px] text-muted-foreground font-black uppercase tracking-widest opacity-40">
                                             {businessName.length}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Results Area */}
-                        {(chaldeanRes && pythagoreanRes) && (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                    {/* Results Area */}
+                    {(chaldeanRes && pythagoreanRes) && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
 
-                                {/* Birth Data & Lucky Numbers (Reference) */}
-                                {birthDataRef && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="premium-card p-6 rounded-[2rem] border border-border text-center bg-card/60 backdrop-blur-sm group hover:border-[#D4AF37]/30 transition-all">
-                                            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.2em] mb-4 text-center">Driver (Reference)</p>
-                                            <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthDataRef.driver}</div>
-                                            <div className="flex items-center justify-center gap-2 text-[#D4AF37] font-bold">
-                                                <Star size={14} className="fill-[#D4AF37]" />
-                                                <span className="text-xs uppercase tracking-widest">{birthDataRef.driverPlanet}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="premium-card p-6 rounded-[2rem] border border-border text-center bg-card/60 backdrop-blur-sm group hover:border-[#6366f1]/30 transition-all">
-                                            <p className="text-[10px] font-black text-[#6366f1] uppercase tracking-[0.2em] mb-4 text-center">Conductor (Reference)</p>
-                                            <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthDataRef.conductor}</div>
-                                            <div className="flex items-center justify-center gap-2 text-[#6366f1] font-bold">
-                                                <Star size={14} className="fill-[#6366f1]" />
-                                                <span className="text-xs uppercase tracking-widest">{birthDataRef.conductorPlanet}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="premium-card p-6 rounded-[2rem] border border-border bg-card/60 backdrop-blur-sm flex flex-col items-center justify-center group hover:border-green-500/30 transition-all">
-                                            <p className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em] mb-4 text-center">Auspicious Numbers</p>
-                                            <div className="flex flex-wrap gap-2 justify-center">
-                                                {luckyNumbers.map(num => (
-                                                    <div key={num} className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 font-black text-lg hover:bg-green-500 hover:text-black transition-all cursor-default shadow-sm shadow-green-500/10">
-                                                        {num}
-                                                    </div>
-                                                ))}
-                                                {luckyNumbers.length === 0 && (
-                                                    <div className="text-muted-foreground text-[10px] italic">Set Client for Lucky Nos</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <SystemCard result={chaldeanRes} />
-                                    <SystemCard result={pythagoreanRes} />
-                                </div>
-
-                                {/* Breakdown Table */}
-                                <div className="premium-card bg-card/40 border border-border rounded-[2rem] p-8 overflow-hidden backdrop-blur-md">
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                                <Database size={16} />
-                                            </div>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Vibrational Analysis Breakdown</span>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Vowels</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-muted" />
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Consonants</span>
-                                            </div>
+                            {/* Birth Data & Lucky Numbers (Reference) */}
+                            {birthDataRef && (
+                                <div className={`grid grid-cols-1 md:grid-cols-2 ${selectedSectorId ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-[#10B981]/30 transition-all">
+                                        <p className="text-[10px] font-black text-[#10B981] uppercase tracking-[0.2em] mb-4 text-center">Driver (Reference)</p>
+                                        <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthDataRef.driver}</div>
+                                        <div className="flex items-center justify-center gap-2 text-[#10B981] font-bold">
+                                            <Star size={14} className="fill-[#10B981]" />
+                                            <span className="text-xs uppercase tracking-widest">{birthDataRef.driverPlanet}</span>
                                         </div>
                                     </div>
 
-                                    <div className="overflow-x-auto custom-scrollbar pb-2">
-                                        <div className="min-w-max">
-                                            {/* Headers */}
-                                            <div className="flex items-end border-b border-border/50 pb-4 mb-6">
-                                                <div className="w-32 text-[10px] font-black text-muted-foreground uppercase px-2 mb-2">Archetype</div>
-                                                <div className="flex gap-2">
-                                                    {breakdown.map((b, i) => (
-                                                        <div key={i} className="w-12 flex flex-col items-center gap-3">
-                                                            <div className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 font-black text-xl shadow-sm transition-all ${isVowel(b.char) ? 'border-primary bg-primary/10 text-primary scale-110 shadow-primary/20' : 'border-border bg-muted/20 text-muted-foreground/80'}`}>{b.char}</div>
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-[#6366f1]/30 transition-all">
+                                        <p className="text-[10px] font-black text-[#6366f1] uppercase tracking-[0.2em] mb-4 text-center">Conductor (Reference)</p>
+                                        <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthDataRef.conductor}</div>
+                                        <div className="flex items-center justify-center gap-2 text-[#6366f1] font-bold">
+                                            <Star size={14} className="fill-[#6366f1]" />
+                                            <span className="text-xs uppercase tracking-widest">{birthDataRef.conductorPlanet}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-green-500/30 transition-all">
+                                        <p className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em] mb-4 text-center">Personal Auspicious</p>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            {luckyNumbers.map(num => (
+                                                <div key={num} className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 font-black text-lg hover:bg-green-500 hover:text-black transition-all cursor-default shadow-sm shadow-green-500/10">
+                                                    {num}
+                                                </div>
+                                            ))}
+                                            {luckyNumbers.length === 0 && (
+                                                <div className="text-muted-foreground text-[10px] italic">Set Client info</div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {selectedSectorId && sectors.find(s => s.id === selectedSectorId) && (
+                                        <>
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-[#10B981]/50 transition-all"
+                                            >
+                                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4 text-center">Sector Chaldean</p>
+                                                <div className="flex flex-wrap gap-2 justify-center">
+                                                    {(sectors.find(s => s.id === selectedSectorId).chaldean_targets || sectors.find(s => s.id === selectedSectorId).lucky_numbers).split(',').map((num: string, i: number) => (
+                                                        <div key={i} className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-lg hover:bg-primary hover:text-black transition-all cursor-default shadow-sm shadow-primary/10">
+                                                            {num.trim()}
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </div>
-                                            {/* Rows */}
-                                            <div className="flex items-center py-4 border-b border-border/30 group hover:bg-mystic-gold/10 transition-colors rounded-xl">
-                                                <div className="w-32 text-[10px] font-black text-mystic-gold uppercase px-4 tracking-widest flex items-center gap-2">Chaldean</div>
-                                                <div className="flex gap-2">
-                                                    {breakdown.map((b, i) => (
-                                                        <div key={i} className="w-12 text-center text-sm font-black text-foreground">{b.chaldean}</div>
-                                                    ))}
+                                            </motion.div>
+
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-black/50 transition-all"
+                                            >
+                                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-4 text-center">Sector Pythagorean</p>
+                                                <div className="flex flex-wrap gap-2 justify-center">
+                                                    {sectors.find(s => s.id === selectedSectorId).pythagorean_targets?.split(',').map((num: string, i: number) => (
+                                                        <div key={i} className="w-10 h-10 rounded-full bg-black/10 border border-black/20 flex items-center justify-center text-black font-black text-lg hover:bg-black hover:text-white transition-all cursor-default shadow-sm shadow-black/10">
+                                                            {num.trim()}
+                                                        </div>
+                                                    )) || <div className="text-muted-foreground text-[10px] italic">No targets set</div>}
+                                                </div>
+                                            </motion.div>
+
+                                            <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-amber-500/30 transition-all">
+                                                <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 text-center">Sector Planet</p>
+                                                <div className="text-4xl font-black text-slate-900 mb-2 truncate px-2">{sectors.find(s => s.id === selectedSectorId).primary_planet || "N/A"}</div>
+                                                <div className="flex items-center justify-center gap-2 text-amber-600 font-bold">
+                                                    <Star size={14} className="fill-amber-600" />
+                                                    <span className="text-[9px] uppercase tracking-widest">{sectors.find(s => s.id === selectedSectorId).sector_name}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center py-4 group hover:bg-primary/10 transition-colors rounded-xl mt-2">
-                                                <div className="w-32 text-[10px] font-black text-primary uppercase px-4 tracking-widest flex items-center gap-2">Pythagorean</div>
-                                                <div className="flex gap-2">
-                                                    {breakdown.map((b, i) => (
-                                                        <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.pythagorean}</div>
-                                                    ))}
-                                                </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <SystemCard result={chaldeanRes} />
+                                <SystemCard result={pythagoreanRes} />
+                            </div>
+
+                            {/* Breakdown Table */}
+                            <div className="bg-white border border-black/5 shadow-xl rounded-3xl p-6 overflow-hidden">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                            <Database size={16} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Vibrational Analysis Breakdown</span>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-primary" />
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Vowels</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-muted" />
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Consonants</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto custom-scrollbar pb-2">
+                                    <div className="min-w-max">
+                                        {/* Headers */}
+                                        <div className="flex items-end border-b border-border/50 pb-4 mb-6">
+                                            <div className="w-32 text-[10px] font-black text-muted-foreground uppercase px-2 mb-2">Archetype</div>
+                                            <div className="flex gap-2">
+                                                {breakdown.map((b, i) => (
+                                                    <div key={i} className="w-12 flex flex-col items-center gap-3">
+                                                        <div className={`w-10 h-10 flex items-center justify-center rounded-xl border-2 font-black text-xl shadow-sm transition-all ${isVowel(b.char) ? 'border-primary bg-primary/10 text-primary scale-110 shadow-primary/20' : 'border-border bg-muted/20 text-muted-foreground/80'}`}>{b.char}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {/* Rows */}
+                                        <div className="flex items-center py-4 border-b border-border/30 group hover:bg-mystic-gold/10 transition-colors rounded-xl">
+                                            <div className="w-32 text-[10px] font-black text-mystic-gold uppercase px-4 tracking-widest flex items-center gap-2">Chaldean</div>
+                                            <div className="flex gap-2">
+                                                {breakdown.map((b, i) => (
+                                                    <div key={i} className="w-12 text-center text-sm font-black text-foreground">{b.chaldean}</div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center py-4 group hover:bg-primary/10 transition-colors rounded-xl mt-2">
+                                            <div className="w-32 text-[10px] font-black text-primary uppercase px-4 tracking-widest flex items-center gap-2">Pythagorean</div>
+                                            <div className="flex gap-2">
+                                                {breakdown.map((b, i) => (
+                                                    <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.pythagorean}</div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Meaning Descriptions */}
-                                <div className="grid grid-cols-1 gap-6">
-                                    {chaldeanRes?.description && (
-                                        <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
-                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-mystic-gold" />
-                                            <h3 className="text-mystic-gold font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-                                                <Sparkles size={14} /> Chaldean Esoteric Insights ({chaldeanRes.compound})
-                                            </h3>
-                                            <p className="text-foreground/80 leading-relaxed text-sm font-medium">{chaldeanRes.description}</p>
-                                        </div>
-                                    )}
-                                    {pythagoreanRes?.description && (
-                                        <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
-                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
-                                            <h3 className="text-primary font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-                                                <Sparkles size={14} /> Pythagorean Vibrational Wisdom ({pythagoreanRes.compound})
-                                            </h3>
-                                            <p className="text-foreground/80 leading-relaxed text-sm font-medium">{pythagoreanRes.description}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
-                        )}
-                    </div>
+                            </div>
+
+                            {/* Meaning Descriptions */}
+                            <div className="grid grid-cols-1 gap-6">
+                                {chaldeanRes?.description && (
+                                    <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-mystic-gold" />
+                                        <h3 className="text-mystic-gold font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
+                                            <Sparkles size={14} /> Chaldean Esoteric Insights ({chaldeanRes.compound})
+                                        </h3>
+                                        <p className="text-foreground/80 leading-relaxed text-sm font-medium">{chaldeanRes.description}</p>
+                                    </div>
+                                )}
+                                {pythagoreanRes?.description && (
+                                    <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+                                        <h3 className="text-primary font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
+                                            <Sparkles size={14} /> Pythagorean Vibrational Wisdom ({pythagoreanRes.compound})
+                                        </h3>
+                                        <p className="text-foreground/80 leading-relaxed text-sm font-medium">{pythagoreanRes.description}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </div>
 
 
 
-                    {/* Right Column: History & Reference */}
-                    <div className="xl:col-span-1 space-y-6">
+                {/* Right Column: History & Reference */}
+                <div className="xl:col-span-1 space-y-6">
 
-                        {/* Reference Tables (Universal Keys) */}
-                        <div className="premium-card p-8 rounded-[2rem] border border-border sticky top-32 bg-card/60 backdrop-blur-md no-print">
-                            <h2 className="text-xl font-black text-foreground mb-8 flex items-center gap-3 tracking-tight">
-                                <span className="p-2 bg-muted rounded-xl text-foreground"><Database size={20} /></span>
-                                Universal Keys
-                            </h2>
-                            <div className="space-y-10">
-                                <div>
-                                    <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">Chaldean Values</h3>
-                                    <div className="grid grid-cols-4 gap-3 text-center">
-                                        {lettersMap.filter(l => l.chaldean_number > 0).sort((a, b) => a.chaldean_number - b.chaldean_number).reduce((acc: any[], curr) => {
-                                            const found = acc.find(g => g.num === curr.chaldean_number);
-                                            if (found) found.letters.push(curr.letter);
-                                            else acc.push({ num: curr.chaldean_number, letters: [curr.letter] });
-                                            return acc;
-                                        }, []).map((g) => (
-                                            <div key={g.num} className="bg-input/20 rounded-xl p-3 border border-border group hover:border-mystic-gold/20 transition-all">
-                                                <span className="text-xl font-black text-mystic-gold block mb-1">{g.num}</span>
-                                                <span className="text-[9px] text-muted-foreground font-black tracking-widest block">{g.letters.join(' ')}</span>
+                    {/* Reference Tables (Universal Keys) */}
+                    <div className="bg-white p-6 rounded-3xl border border-black/5 sticky top-20 shadow-xl no-print">
+                        <h2 className="text-xl font-black text-foreground mb-8 flex items-center gap-3 tracking-tight">
+                            <span className="p-2 bg-muted rounded-xl text-foreground"><Database size={20} /></span>
+                            Universal Keys
+                        </h2>
+                        <div className="space-y-10">
+                            {selectedSectorId && sectors.find(s => s.id === selectedSectorId) && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="p-5 rounded-2xl bg-primary/5 border border-primary/20 relative overflow-hidden group"
+                                >
+                                    <div className="absolute -right-4 -bottom-4 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                                        <Briefcase size={80} />
+                                    </div>
+                                    <h3 className="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Sparkles size={12} />
+                                        Sector Lucky Numbers
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2 relative z-10">
+                                        {sectors.find(s => s.id === selectedSectorId).lucky_numbers.split(',').map((num: string, i: number) => (
+                                            <div
+                                                key={i}
+                                                className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-lg shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                                                title={`Vibrational Harmony: ${num.trim()}`}
+                                            >
+                                                {num.trim()}
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">Pythagorean System</h3>
-                                    <div className="grid grid-cols-3 gap-3 text-center">
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                                            <div key={num} className="bg-input/20 rounded-xl p-3 border border-border group hover:border-primary/20 transition-all">
-                                                <span className="text-xl font-black text-primary block mb-1">{num}</span>
-                                                <span className="text-[9px] text-muted-foreground font-black tracking-widest block">
-                                                    {lettersMap.filter(l => Number(l.pythagorean_number) === num).map(l => l.letter).join(' ')}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <p className="text-[9px] text-muted-foreground font-bold mt-4 uppercase tracking-widest opacity-60">
+                                        Optimized for: {sectors.find(s => s.id === selectedSectorId).sector_name}
+                                    </p>
+                                </motion.div>
+                            )}
+
+                            <div>
+                                <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">Chaldean Values</h3>
+                                <div className="grid grid-cols-4 gap-3 text-center">
+                                    {lettersMap.filter(l => l.chaldean_number > 0).sort((a, b) => a.chaldean_number - b.chaldean_number).reduce((acc: any[], curr) => {
+                                        const found = acc.find(g => g.num === curr.chaldean_number);
+                                        if (found) found.letters.push(curr.letter);
+                                        else acc.push({ num: curr.chaldean_number, letters: [curr.letter] });
+                                        return acc;
+                                    }, []).map((g) => (
+                                        <div key={g.num} className="bg-input/20 rounded-xl p-3 border border-border group hover:border-mystic-gold/20 transition-all">
+                                            <span className="text-xl font-black text-mystic-gold block mb-1">{g.num}</span>
+                                            <span className="text-[9px] text-muted-foreground font-black tracking-widest block">{g.letters.join(' ')}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
+                            <div>
+                                <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">Pythagorean System</h3>
+                                <div className="grid grid-cols-3 gap-3 text-center">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                                        <div key={num} className="bg-input/20 rounded-xl p-3 border border-border group hover:border-primary/20 transition-all">
+                                            <span className="text-xl font-black text-primary block mb-1">{num}</span>
+                                            <span className="text-[9px] text-muted-foreground font-black tracking-widest block">
+                                                {lettersMap.filter(l => Number(l.pythagorean_number) === num).map(l => l.letter).join(' ')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {harmonicBridges.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="pt-6 border-t border-border/50"
+                                >
+                                    <h3 className="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <CheckCircle size={12} className="text-green-500" />
+                                        System Harmonic Bridges
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-3 text-center">
+                                        {harmonicBridges.map((bridge) => (
+                                            <div key={bridge.num} className="bg-green-500/5 rounded-xl p-3 border border-green-500/10 group hover:border-green-500/30 transition-all">
+                                                <span className="text-xl font-black text-green-600 block mb-1">{bridge.num}</span>
+                                                <span className="text-[9px] text-green-700 font-black tracking-widest block">{bridge.letters.join(' ')}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-[8px] text-muted-foreground font-bold mt-3 uppercase tracking-widest opacity-60 text-center">
+                                        Letters common to both systems
+                                    </p>
+                                </motion.div>
+                            )}
+
                         </div>
                     </div>
                 </div>
-                <style dangerouslySetInnerHTML={{
-                    __html: `
+            </div>
+            <style dangerouslySetInnerHTML={{
+                __html: `
                     @media print {
                         @page { margin: 1cm; size: auto; }
                         
@@ -1189,8 +1247,7 @@ export default function BusinessNumerology() {
                         .menu-break { page-break-inside: avoid; }
                     }
                 `
-                }} />
-            </div>
-        </>
+            }} />
+        </div>
     );
 }

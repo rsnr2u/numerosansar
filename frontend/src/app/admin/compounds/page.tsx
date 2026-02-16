@@ -24,7 +24,12 @@ export default function AdminCompounds() {
     const [selected, setSelected] = useState<Partial<CompoundNumber>>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [resultFilter, setResultFilter] = useState("All");
+    const [userRole, setUserRole] = useState<string | null>(null);
     const router = useRouter();
+
+    useEffect(() => {
+        setUserRole(localStorage.getItem('user_role'));
+    }, []);
 
     useEffect(() => {
         fetchCompounds();
@@ -135,10 +140,10 @@ export default function AdminCompounds() {
             >
                 <div>
                     <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-                        <span className="p-2.5 bg-gradient-gold rounded-xl shadow-lg shadow-mystic-gold/20">
+                        <span className="p-2.5 bg-astro-gradient rounded-xl shadow-lg shadow-mystic-gold/20">
                             <Database size={24} className="text-white" />
                         </span>
-                        <span className="text-gradient-gold">Compound Numbers</span>
+                        <span className="bg-clip-text text-black">Compound Numbers</span>
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1 ml-1">Manage esoteric meanings and number vibrations</p>
                 </div>
@@ -169,104 +174,108 @@ export default function AdminCompounds() {
                             className="bg-card/50 backdrop-blur-md border border-border rounded-xl pl-10 pr-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-full md:w-64 shadow-inner"
                         />
                     </div>
-                    <div className="flex items-center gap-2 p-1 bg-card/30 backdrop-blur-sm rounded-2xl border border-border shadow-sm">
-                        <button onClick={exportCSV} className="p-2.5 hover:bg-white/5 rounded-xl text-muted-foreground hover:text-foreground transition-all" title="Export CSV">
-                            <FileText size={20} />
-                        </button>
-                        <button onClick={exportExcel} className="p-2.5 hover:bg-green-500/10 text-green-500 rounded-xl transition-all" title="Export Excel">
-                            <Database size={20} />
-                        </button>
-                        <button onClick={exportPDF} className="p-2.5 hover:bg-red-500/10 text-red-500 rounded-xl transition-all" title="Export PDF">
-                            <Download size={20} />
-                        </button>
-                    </div>
+                    {userRole === 'super_admin' && (
+                        <div className="flex items-center gap-2 p-1 bg-card/30 backdrop-blur-sm rounded-2xl border border-border shadow-sm">
+                            <button onClick={exportCSV} className="p-2.5 hover:bg-white/5 rounded-xl text-muted-foreground hover:text-foreground transition-all" title="Export CSV">
+                                <FileText size={20} />
+                            </button>
+                            <button onClick={exportExcel} className="p-2.5 hover:bg-green-500/10 text-green-500 rounded-xl transition-all" title="Export Excel">
+                                <Database size={20} />
+                            </button>
+                            <button onClick={exportPDF} className="p-2.5 hover:bg-red-500/10 text-red-500 rounded-xl transition-all" title="Export PDF">
+                                <Download size={20} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className={`grid grid-cols-1 ${userRole === 'super_admin' ? 'lg:grid-cols-12' : 'lg:grid-cols-1'} gap-10`}>
                 {/* Editor Section */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="lg:col-span-4"
-                >
-                    <div className="premium-card p-6 sticky top-30 bg-card/60">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold flex items-center gap-3">
-                                {selected.id ? (
-                                    <span className="p-1.5 bg-primary/10 rounded-lg"><PenTool size={18} className="text-primary" /></span>
-                                ) : (
-                                    <span className="p-1.5 bg-primary/10 rounded-lg"><Plus size={18} className="text-primary" /></span>
+                {userRole === 'super_admin' && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="lg:col-span-4"
+                    >
+                        <div className="premium-card p-6 sticky top-30 bg-card/60">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold flex items-center gap-3">
+                                    {selected.id ? (
+                                        <span className="p-1.5 bg-primary/10 rounded-lg"><PenTool size={18} className="text-primary" /></span>
+                                    ) : (
+                                        <span className="p-1.5 bg-primary/10 rounded-lg"><Plus size={18} className="text-primary" /></span>
+                                    )}
+                                    {selected.id ? "Edit vibration" : "New vibration"}
+                                </h2>
+                                {selected.id && (
+                                    <button onClick={() => setSelected({})} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground transition-colors">
+                                        <X size={18} />
+                                    </button>
                                 )}
-                                {selected.id ? "Edit vibration" : "New vibration"}
-                            </h2>
-                            {selected.id && (
-                                <button onClick={() => setSelected({})} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground transition-colors">
-                                    <X size={18} />
-                                </button>
-                            )}
-                        </div>
+                            </div>
 
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Number</label>
+                                        <input
+                                            type="number"
+                                            value={selected.number || ""}
+                                            onChange={(e) => setSelected({ ...selected, number: parseInt(e.target.value) })}
+                                            className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-lg font-bold"
+                                            placeholder="00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Vibration</label>
+                                        <select
+                                            value={selected.result || "Good"}
+                                            onChange={(e) => setSelected({ ...selected, result: e.target.value })}
+                                            className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
+                                        >
+                                            <option value="Excellent">Excellent</option>
+                                            <option value="Super">Super</option>
+                                            <option value="Good">Good</option>
+                                            <option value="Average">Average</option>
+                                            <option value="Not Good">Not Good</option>
+                                            <option value="Bad">Bad</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div>
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Number</label>
+                                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Title (Key Signature)</label>
                                     <input
-                                        type="number"
-                                        value={selected.number || ""}
-                                        onChange={(e) => setSelected({ ...selected, number: parseInt(e.target.value) })}
-                                        className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-lg font-bold"
-                                        placeholder="00"
+                                        value={selected.title || ""}
+                                        onChange={(e) => setSelected({ ...selected, title: e.target.value })}
+                                        className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-medium"
+                                        placeholder="e.g. The Royal Star of the Lion"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Vibration</label>
-                                    <select
-                                        value={selected.result || "Good"}
-                                        onChange={(e) => setSelected({ ...selected, result: e.target.value })}
-                                        className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
-                                    >
-                                        <option value="Excellent">Excellent</option>
-                                        <option value="Super">Super</option>
-                                        <option value="Good">Good</option>
-                                        <option value="Average">Average</option>
-                                        <option value="Not Good">Not Good</option>
-                                        <option value="Bad">Bad</option>
-                                    </select>
+                                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Detailed Meaning</label>
+                                    <textarea
+                                        rows={5}
+                                        value={selected.description || ""}
+                                        onChange={(e) => setSelected({ ...selected, description: e.target.value })}
+                                        className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all leading-relaxed text-sm"
+                                        placeholder="Unveil the esoteric essence..."
+                                    />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Title (Key Signature)</label>
-                                <input
-                                    value={selected.title || ""}
-                                    onChange={(e) => setSelected({ ...selected, title: e.target.value })}
-                                    className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all font-medium"
-                                    placeholder="e.g. The Royal Star of the Lion"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Detailed Meaning</label>
-                                <textarea
-                                    rows={5}
-                                    value={selected.description || ""}
-                                    onChange={(e) => setSelected({ ...selected, description: e.target.value })}
-                                    className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all leading-relaxed text-sm"
-                                    placeholder="Unveil the esoteric essence..."
-                                />
-                            </div>
 
-                            <button
-                                onClick={handleSave}
-                                className="w-full py-3.5 bg-gradient-primary text-white font-black text-base rounded-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20 glow-on-hover"
-                            >
-                                <Save size={18} /> {selected.id ? "Update Essence" : "Create Essence"}
-                            </button>
+                                <button
+                                    onClick={handleSave}
+                                    className="w-full py-3.5 bg-gradient-primary text-white font-black text-base rounded-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20 glow-on-hover"
+                                >
+                                    <Save size={18} /> {selected.id ? "Update Essence" : "Create Essence"}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </motion.div>
+                    </motion.div>
+                )}
 
                 {/* List Section */}
-                <div className="lg:col-span-8">
+                <div className={userRole === 'super_admin' ? 'lg:col-span-8' : 'lg:col-span-1'}>
                     <div className="space-y-6">
                         <AnimatePresence mode="popLayout">
                             {filteredCompounds.map((m, index) => (
@@ -278,11 +287,6 @@ export default function AdminCompounds() {
                                     transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
                                     className="premium-card p-6 group hover:border-primary/20 bg-card/40 relative overflow-hidden"
                                 >
-                                    {/* Decorative Sparkle for Excellent/Super */}
-                                    {(m.result === 'Excellent' || m.result === 'Super') && (
-                                        <Sparkles className="absolute -right-4 -top-4 text-mystic-gold/10 w-24 h-24 rotate-12 transition-transform group-hover:scale-110" />
-                                    )}
-
                                     <div className="flex flex-col md:flex-row gap-6 relative z-10">
                                         <div className="flex-shrink-0 flex items-start justify-center">
                                             <span className={`w-12 h-12 flex items-center justify-center rounded-xl text-xl font-black shadow-lg shadow-mystic-gold/10 transition-transform group-hover:scale-110 group-hover:rotate-3 ${m.result === 'Not Good' || m.result === 'Bad' ? 'bg-red-500 text-white' :
@@ -308,14 +312,16 @@ export default function AdminCompounds() {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                                                    <button onClick={() => setSelected(m)} className="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all border border-border">
-                                                        <PenTool size={16} />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(m.id)} className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-all border border-border">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
+                                                {userRole === 'super_admin' && (
+                                                    <div className="flex gap-2 transition-all">
+                                                        <button onClick={() => setSelected(m)} className="p-2 bg-card hover:bg-primary/10 hover:text-primary rounded-lg transition-all border border-border shadow-sm">
+                                                            <PenTool size={16} />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(m.id)} className="p-2 bg-card hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-all border border-border shadow-sm">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <p className="text-muted-foreground text-base leading-relaxed font-medium line-clamp-3 group-hover:line-clamp-none transition-all duration-500">
                                                 {m.description}

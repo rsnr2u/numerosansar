@@ -14,9 +14,14 @@ $routes->group('api', function ($routes) {
     $routes->post('calculate', 'NumerologyController::calculate');
     $routes->get('meanings/(:num)', 'NumerologyController::meanings/$1');
     $routes->post('login', 'AuthController::login');
+    $routes->post('register', 'AuthController::register');
+    $routes->get('plans', 'SubscriptionController::getPlans');
 
     // Protected Admin Routes
     $routes->group('admin', ['filter' => 'auth'], function ($routes) {
+        $routes->get('subscription', 'UserSubscriptionController::getActiveSubscription');
+        $routes->post('plans', 'SubscriptionController::savePlan');
+        $routes->delete('plans/(:num)', 'SubscriptionController::deletePlan/$1');
         $routes->get('meanings', 'AdminController::listMeanings');
         $routes->post('meanings', 'AdminController::saveMeaning');
         $routes->delete('meanings/(:num)', 'AdminController::deleteMeaning/$1');
@@ -41,6 +46,23 @@ $routes->group('api', function ($routes) {
         $routes->get('clients/(:num)/history', 'ClientController::getHistory/$1');
         $routes->resource('clients', ['controller' => 'ClientController']);
 
+        // Users Management (Super Admin only checks within controller)
+        $routes->get('vendors', 'Admin\UserController::getVendors');
+        $routes->get('vendors/(:num)', 'Admin\UserController::show/$1');
+        $routes->post('vendors', 'Admin\UserController::create');
+        $routes->post('vendors/(:num)/status', 'Admin\UserController::updateStatus/$1');
+        $routes->post('vendors/(:num)/subscription', 'Admin\UserController::updateSubscription/$1');
+        $routes->resource('users', ['controller' => 'Admin\UserController']);
+
+        // Platform Administration
+        $routes->get('payments', 'Admin\PaymentsController::index');
+        $routes->get('payments/stats', 'Admin\PaymentsController::dashboardStats');
+        $routes->get('payments/trends', 'Admin\PaymentsController::getTrendData');
+        $routes->get('system-config', 'Admin\SystemConfigController::index');
+        $routes->post('system-config', 'Admin\SystemConfigController::update');
+        $routes->get('audit-logs', 'Admin\AuditLogController::index');
+        $routes->get('registration-stats', 'Admin\UserController::getRegistrationStats');
+
         // Planet Relations
         $routes->get('planet-relations', 'AdminPlanetRelationController::index');
 
@@ -55,5 +77,25 @@ $routes->group('api', function ($routes) {
 
         // Vehicle Numerology
         $routes->post('vehicle-numerology/check', 'VehicleNumerologyController::check');
+
+        // AI Suggestions
+        $routes->get('ai/settings', 'AIController::getSettings');
+        $routes->post('ai/settings', 'AIController::updateSettings');
+        $routes->post('ai/suggest', 'AIController::suggest');
+
+        // Planet Relations (Compatibility Matrix)
+        $routes->get('planet-relations', 'PlanetRelationController::index');
+        $routes->post('planet-relations', 'PlanetRelationController::save');
+        $routes->delete('planet-relations/(:num)', 'PlanetRelationController::delete/$1');
+
+        // Vowel/Consonant Rules
+        $routes->get('vowel-consonant-rules', 'VowelConsonantRuleController::index');
+        $routes->post('vowel-consonant-rules', 'VowelConsonantRuleController::save');
+        $routes->delete('vowel-consonant-rules/(:num)', 'VowelConsonantRuleController::delete/$1');
+
+        // Business Lucky Numbers (Sectors)
+        $routes->get('business-lucky-numbers', 'BusinessLuckyNumberController::index');
+        $routes->post('business-lucky-numbers', 'BusinessLuckyNumberController::save');
+        $routes->delete('business-lucky-numbers/(:num)', 'BusinessLuckyNumberController::delete/$1');
     });
 });

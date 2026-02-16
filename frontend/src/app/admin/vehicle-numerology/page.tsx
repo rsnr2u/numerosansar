@@ -183,23 +183,23 @@ export default function VehicleNumerologyPage() {
             {/* Client Selection */}
             <div className="relative z-50">
                 {selectedClient ? (
-                    <div className="premium-card p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 backdrop-blur-md flex items-center justify-between shadow-lg">
+                    <div className="p-4 rounded-xl border border-[#D4AF37]/20 bg-[#FAF7F2] flex items-center justify-between shadow-lg">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary rounded-xl text-black shadow-lg shadow-primary/20">
+                            <div className="p-3 bg-[#B91C1C] rounded-xl text-white shadow-lg shadow-red-500/20">
                                 <Users size={20} />
                             </div>
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-black text-foreground flex items-center gap-3 tracking-tight">
+                                <h2 className="text-xl font-black text-[#2D2926] flex items-center gap-3 tracking-tight">
                                     {selectedClient.full_name}
                                     {selectedClient.calling_name && (
-                                        <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full font-bold uppercase tracking-tighter">
+                                        <span className="text-[10px] px-2 py-0.5 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 rounded-full font-bold uppercase tracking-tighter">
                                             {selectedClient.calling_name}
                                         </span>
                                     )}
                                 </h2>
-                                <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-muted/30 rounded-lg">
-                                        <Calendar size={12} className="text-primary" />
+                                <div className="flex items-center gap-4 text-xs font-bold text-[#2D2926]/40 uppercase tracking-widest mt-1">
+                                    <span className="flex items-center gap-1.5 p-1 px-2 bg-[#F3EFE9] rounded-lg">
+                                        <Calendar size={12} className="text-[#10B981]" />
                                         {new Date(selectedClient.dob).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                     </span>
                                 </div>
@@ -207,12 +207,12 @@ export default function VehicleNumerologyPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="premium-card p-1.5 rounded-2xl border border-border bg-card/40 backdrop-blur-md flex items-center shadow-lg group focus-within:border-primary/50 transition-all">
-                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-focus-within:bg-primary group-focus-within:text-black transition-colors ml-1">
+                    <div className="bg-white p-1.5 rounded-2xl border border-black/5 flex items-center shadow-xl group focus-within:border-[#10B981]/50 transition-all">
+                        <div className="p-2.5 bg-[#10B981]/10 rounded-xl text-[#10B981] group-focus-within:bg-[#10B981] group-focus-within:text-white transition-colors ml-1">
                             <Users size={18} />
                         </div>
                         <input
-                            className="bg-transparent px-4 py-2 text-foreground w-full outline-none placeholder:text-muted-foreground font-medium"
+                            className="bg-transparent px-4 py-2 text-[#2D2926] w-full outline-none placeholder:text-[#2D2926]/30 font-medium"
                             placeholder="Select a client to start analysis..."
                             value={clientSearch}
                             onChange={(e) => { setClientSearch(e.target.value); searchClients(e.target.value); }}
@@ -244,7 +244,7 @@ export default function VehicleNumerologyPage() {
             </div>
 
             {/* Input Section */}
-            <div className="glass-card p-8 rounded-[2rem] border border-border bg-card/60 backdrop-blur-sm relative overflow-hidden">
+            <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                     <Car size={150} />
                 </div>
@@ -252,11 +252,11 @@ export default function VehicleNumerologyPage() {
                 <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                         <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black pl-1">Vehicle Type</label>
+                            <label className="text-[9px] uppercase tracking-[0.2em] text-[#2D2926]/40 font-black pl-1">Vehicle Type</label>
                             <select
                                 value={vehicleType}
                                 onChange={(e) => setVehicleType(e.target.value)}
-                                className="w-full bg-input/20 border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-accent/50 transition-all font-bold"
+                                className="w-full bg-[#FAF7F2] border border-black/5 rounded-xl px-4 py-2.5 text-[#2D2926] focus:outline-none focus:border-[#10B981]/50 transition-all font-bold"
                             >
                                 <option value="2 Wheeler">2 Wheeler (Bike/Scooter)</option>
                                 <option value="4 Wheeler">4 Wheeler (Car/SUV)</option>
@@ -266,28 +266,28 @@ export default function VehicleNumerologyPage() {
                         </div>
 
                         <div className="md:col-span-1 space-y-2">
-                            <label className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black pl-1">Vehicle Number</label>
+                            <label className="text-[9px] uppercase tracking-[0.2em] text-[#2D2926]/40 font-black pl-1">Vehicle Number</label>
                             <input
                                 type="text"
                                 value={vehicle}
                                 onChange={(e) => setVehicle(e.target.value.toUpperCase())}
                                 required
                                 placeholder="e.g. MH01AB1234"
-                                className="w-full bg-input/20 border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-accent/50 transition-all font-mono text-lg uppercase tracking-wider"
+                                className="w-full bg-[#FAF7F2] border border-black/5 rounded-xl px-4 py-2.5 text-[#2D2926] focus:outline-none focus:border-[#10B981]/50 transition-all font-mono text-lg uppercase tracking-wider"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading || !vehicle}
-                            className="bg-gradient-primary text-white font-black py-2.5 px-8 rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group h-[48px]"
+                            className="bg-astro-gradient text-white font-black py-2.5 px-8 rounded-xl hover:shadow-2xl active:scale-95 transition-all shadow-xl shadow-[#10B981]/20 flex items-center justify-center gap-2 group h-[48px] text-xs uppercase tracking-widest"
                         >
                             {loading ? "Analyzing..." : <>{checkId ? 'Update Result' : 'Analyze Vehicle'} <Sparkles size={18} className="group-hover:animate-pulse" /></>}
                         </button>
                     </div>
 
                     {error && (
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-widest">
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-2 text-xs font-black uppercase tracking-widest">
                             <AlertCircle size={14} />
                             {error}
                         </div>
@@ -300,31 +300,31 @@ export default function VehicleNumerologyPage() {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Chaldean System */}
-                        <div className="premium-card p-8 rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-md relative group hover:border-primary/30 transition-all">
+                        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative group hover:border-[#D4AF37]/30 transition-all overflow-hidden">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-black text-primary tracking-tighter uppercase">Chaldean System</h3>
-                                <div className="p-2 bg-primary/10 rounded-lg text-primary"><Star size={16} /></div>
+                                <h3 className="text-sm font-black text-[#D4AF37] tracking-widest uppercase">Chaldean System</h3>
+                                <div className="p-2 bg-[#D4AF37]/10 rounded-lg text-[#D4AF37]"><Star size={16} /></div>
                             </div>
                             <div className="flex items-center gap-8">
                                 <div className="text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Compound</p>
-                                    <p className="text-5xl font-black text-foreground">{result.chaldean.compound}</p>
+                                    <p className="text-[9px] font-black text-[#2D2926]/40 uppercase tracking-widest mb-1">Compound</p>
+                                    <p className="text-5xl font-black text-[#2D2926]">{result.chaldean.compound}</p>
                                 </div>
-                                <div className="w-px h-12 bg-border/50" />
+                                <div className="w-px h-12 bg-black/5" />
                                 <div className="text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Root</p>
-                                    <p className="text-5xl font-black text-primary">{result.chaldean.root}</p>
+                                    <p className="text-[9px] font-black text-[#2D2926]/40 uppercase tracking-widest mb-1">Root</p>
+                                    <p className="text-5xl font-black text-[#D4AF37]">{result.chaldean.root}</p>
                                 </div>
                             </div>
-                            <div className="mt-8 pt-6 border-t border-border/50">
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-3">
-                                    <History size={12} className="text-primary" /> Letter Breakdown
+                            <div className="mt-8 pt-6 border-t border-black/5">
+                                <p className="text-[10px] font-black text-[#2D2926]/40 uppercase tracking-widest flex items-center gap-2 mb-3">
+                                    <History size={12} className="text-[#D4AF37]" /> Letter Breakdown
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {result.breakdown.map((item: any, idx: number) => (
-                                        <div key={idx} className="flex flex-col items-center p-2 bg-primary/5 rounded-xl border border-primary/10 min-w-[2.5rem]">
-                                            <span className="text-xs font-black text-foreground">{item.char}</span>
-                                            <span className="text-[10px] text-primary/70 font-bold">{item.ch}</span>
+                                        <div key={idx} className="flex flex-col items-center p-2 bg-[#FAF7F2] rounded-xl border border-black/5 min-w-[2.5rem] shadow-sm">
+                                            <span className="text-xs font-black text-[#2D2926]">{item.char}</span>
+                                            <span className="text-[10px] text-[#D4AF37] font-black">{item.ch}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -332,31 +332,31 @@ export default function VehicleNumerologyPage() {
                         </div>
 
                         {/* Pythagorean System */}
-                        <div className="premium-card p-8 rounded-[2.5rem] border border-border bg-card/40 backdrop-blur-md relative group hover:border-accent/30 transition-all">
+                        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative group hover:border-[#6366f1]/30 transition-all overflow-hidden">
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-black text-accent tracking-tighter uppercase">Pythagorean System</h3>
-                                <div className="p-2 bg-accent/10 rounded-lg text-accent"><CheckCircle size={16} /></div>
+                                <h3 className="text-sm font-black text-[#6366f1] tracking-widest uppercase">Pythagorean System</h3>
+                                <div className="p-2 bg-[#6366f1]/10 rounded-lg text-[#6366f1]"><CheckCircle size={16} /></div>
                             </div>
                             <div className="flex items-center gap-8">
                                 <div className="text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Compound</p>
-                                    <p className="text-5xl font-black text-foreground">{result.pythagorean.compound}</p>
+                                    <p className="text-[9px] font-black text-[#2D2926]/40 uppercase tracking-widest mb-1">Compound</p>
+                                    <p className="text-5xl font-black text-[#2D2926]">{result.pythagorean.compound}</p>
                                 </div>
-                                <div className="w-px h-12 bg-border/50" />
+                                <div className="w-px h-12 bg-black/5" />
                                 <div className="text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Root</p>
-                                    <p className="text-5xl font-black text-accent">{result.pythagorean.root}</p>
+                                    <p className="text-[9px] font-black text-[#2D2926]/40 uppercase tracking-widest mb-1">Root</p>
+                                    <p className="text-5xl font-black text-[#6366f1]">{result.pythagorean.root}</p>
                                 </div>
                             </div>
-                            <div className="mt-8 pt-6 border-t border-border/50">
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-3">
-                                    <History size={12} className="text-accent" /> Letter Breakdown
+                            <div className="mt-8 pt-6 border-t border-black/5">
+                                <p className="text-[10px] font-black text-[#2D2926]/40 uppercase tracking-widest flex items-center gap-2 mb-3">
+                                    <History size={12} className="text-[#6366f1]" /> Letter Breakdown
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {result.breakdown.map((item: any, idx: number) => (
-                                        <div key={idx} className="flex flex-col items-center p-2 bg-accent/5 rounded-xl border border-accent/10 min-w-[2.5rem]">
-                                            <span className="text-xs font-black text-foreground">{item.char}</span>
-                                            <span className="text-[10px] text-accent/70 font-bold">{item.py}</span>
+                                        <div key={idx} className="flex flex-col items-center p-2 bg-[#FAF7F2] rounded-xl border border-black/5 min-w-[2.5rem] shadow-sm">
+                                            <span className="text-xs font-black text-[#2D2926]">{item.char}</span>
+                                            <span className="text-[10px] text-[#6366f1] font-black">{item.py}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -365,37 +365,37 @@ export default function VehicleNumerologyPage() {
                     </div>
 
                     {/* Last 4 Digits Analysis */}
-                    <div className="premium-card p-8 rounded-[2.5rem] border border-border bg-card/60 backdrop-blur-sm relative overflow-hidden group">
+                    <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xl relative overflow-hidden group">
                         <div className="flex flex-col md:flex-row gap-8 items-center">
                             <div className="flex-shrink-0 text-center md:text-left">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Last 4 Digits</p>
-                                <p className="text-4xl font-black text-foreground tracking-widest font-mono bg-muted/30 px-6 py-2 rounded-2xl">{result.last4.number}</p>
+                                <p className="text-[10px] font-black text-[#2D2926]/40 uppercase tracking-widest mb-2 px-1">Last 4 Digits</p>
+                                <p className="text-4xl font-black text-[#2D2926] tracking-widest font-mono bg-[#FAF7F2] px-6 py-2 rounded-2xl border border-black/5 shadow-inner">{result.last4.number}</p>
                             </div>
                             <div className="flex-grow grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase mb-1">Total Sum</p>
-                                    <p className="text-2xl font-black text-foreground">{result.last4.compound}</p>
+                                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-black/5 text-center shadow-sm">
+                                    <p className="text-[9px] font-black text-[#2D2926]/40 uppercase mb-1">Total Sum</p>
+                                    <p className="text-2xl font-black text-[#2D2926]">{result.last4.compound}</p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-center">
-                                    <p className="text-[9px] font-black text-primary uppercase mb-1">Root Number</p>
-                                    <p className="text-2xl font-black text-primary">{result.last4.root}</p>
+                                <div className="p-4 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-center shadow-sm">
+                                    <p className="text-[9px] font-black text-[#D4AF37] uppercase mb-1">Root Number</p>
+                                    <p className="text-2xl font-black text-[#D4AF37]">{result.last4.root}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Last 4 Meaning */}
                         {result.last4.meaning && (
-                            <div className="mt-8 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                            <div className="mt-8 p-6 rounded-2xl bg-[#FAF7F2] border border-black/5 shadow-inner relative">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <h4 className="text-lg font-black text-primary">{result.last4.meaning.title}</h4>
-                                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full border ${result.last4.meaning.result === 'Excellent' || result.last4.meaning.result === 'Good'
+                                    <h4 className="text-lg font-black text-[#D4AF37] tracking-tight">{result.last4.meaning.title}</h4>
+                                    <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-full border ${result.last4.meaning.result === 'Excellent' || result.last4.meaning.result === 'Good'
                                         ? 'bg-green-500/10 text-green-500 border-green-500/20'
                                         : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                         }`}>
                                         {result.last4.meaning.result}
                                     </span>
                                 </div>
-                                <p className="text-sm text-muted-foreground leading-relaxed italic opacity-80">"{result.last4.meaning.description}"</p>
+                                <p className="text-xs text-[#2D2926]/60 leading-relaxed italic font-medium">"{result.last4.meaning.description}"</p>
                             </div>
                         )}
                     </div>

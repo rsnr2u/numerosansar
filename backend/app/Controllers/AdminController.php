@@ -14,6 +14,10 @@ class AdminController extends BaseController
 
     public function calculateName()
     {
+        if (!$this->checkModuleAccess('name')) {
+            return $this->failForbidden('Feature requires active subscription');
+        }
+
         $name = $this->request->getVar('name');
         $dob = $this->request->getVar('dob'); // Get Date of Birth
 
@@ -49,7 +53,7 @@ class AdminController extends BaseController
 
         if ($clientId || $name) {
             $saveData = [
-                'client_id' => $clientId, // Nullable
+                'user_id' => $this->getVendorId(),
                 'client_id' => $clientId, // Nullable
                 'type' => 'Name',
                 'name_value' => $name,
@@ -64,6 +68,10 @@ class AdminController extends BaseController
             ];
 
             if ($existingId) {
+                // Validate ownership before update
+                if (!$this->validateOwnership(\App\Models\ClientNameCheckModel::class, $existingId)) {
+                    return $this->failForbidden('Access denied');
+                }
                 $checkModel->update($existingId, $saveData);
                 $savedId = $existingId;
             } else {
@@ -181,8 +189,15 @@ class AdminController extends BaseController
 
     public function getGlobalHistory()
     {
+        $vendorId = $this->getVendorId();
         $model = new \App\Models\ClientNameCheckModel();
-        $data = $model->orderBy('created_at', 'DESC')->findAll(20);
+
+        $query = $model->orderBy('created_at', 'DESC');
+        if ($this->getVendorRole() !== 'super_admin') {
+            $query->where('user_id', $vendorId);
+        }
+
+        $data = $query->findAll(20);
 
         $formatted = array_map(function ($row) {
             return [
@@ -199,16 +214,29 @@ class AdminController extends BaseController
 
     public function getDashboardStats()
     {
+        $vendorId = $this->getVendorId();
         $clientModel = new \App\Models\ClientModel();
-        $checkModel = new \App\Models\ClientNameCheckModel();
-        $compoundModel = new \App\Models\CompoundNumberModel();
+        $nameCheckModel = new \App\Models\ClientNameCheckModel();
+        $mobileCheckModel = new \App\Models\ClientMobileCheckModel();
+        $vehicleCheckModel = new \App\Models\ClientVehicleCheckModel();
+
+        if ($this->getVendorRole() !== 'super_admin') {
+            $clientModel->where('user_id', $vendorId);
+            $nameCheckModel->where('user_id', $vendorId);
+            $mobileCheckModel->where('user_id', $vendorId);
+            $vehicleCheckModel->where('user_id', $vendorId);
+        }
+
+        $totalNameChecks = $nameCheckModel->countAllResults(false);
+        $totalMobileChecks = $mobileCheckModel->countAllResults(false);
+        $totalVehicleChecks = $vehicleCheckModel->countAllResults(false);
 
         $stats = [
-            'total_clients' => $clientModel->countAllResults(),
-            'total_checks' => $checkModel->countAllResults(),
-            'total_compounds' => $compoundModel->countAllResults(),
+            'total_clients' => $clientModel->countAllResults(false),
+            'total_checks' => $totalNameChecks + $totalMobileChecks + $totalVehicleChecks,
+            'total_compounds' => $totalNameChecks + $totalMobileChecks + $totalVehicleChecks, // Reinterpreted as "Archive Items"
             'recent_clients' => $clientModel->orderBy('created_at', 'DESC')->findAll(5),
-            'recent_checks' => $checkModel->orderBy('created_at', 'DESC')->findAll(5),
+            'recent_checks' => $nameCheckModel->orderBy('created_at', 'DESC')->findAll(5),
         ];
 
         return $this->respond($stats);

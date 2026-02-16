@@ -5,10 +5,14 @@ namespace App\Controllers;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\CompoundNumberModel;
 
-class MobileNumerologyController extends ResourceController
+class MobileNumerologyController extends BaseController
 {
     public function check()
     {
+        if (!$this->checkModuleAccess('mobile')) {
+            return $this->failForbidden('Access to Mobile module requires a subscription.');
+        }
+
         $json = $this->request->getJSON();
         $mobile = $json->mobile_number ?? '';
         // Optional DOB to check lucky status
@@ -70,6 +74,7 @@ class MobileNumerologyController extends ResourceController
         if ($clientId && $saveRecord) {
             $checkModel = new \App\Models\ClientMobileCheckModel();
             $saveData = [
+                'user_id' => $this->getVendorId(),
                 'client_id' => $clientId,
                 'mobile_number' => $mobile,
                 'Compound_number' => $compound,
@@ -80,6 +85,10 @@ class MobileNumerologyController extends ResourceController
             ];
 
             if ($existingId) {
+                // Validate ownership before update
+                if (!$this->validateOwnership(\App\Models\ClientMobileCheckModel::class, $existingId)) {
+                    return $this->failForbidden('Access denied');
+                }
                 $checkModel->update($existingId, $saveData);
                 $savedCheckId = $existingId;
             } else {
@@ -117,18 +126,23 @@ class MobileNumerologyController extends ResourceController
             return $this->failValidationError('ID is required');
         }
 
-        $model = new \App\Models\ClientMobileCheckModel();
-        if ($model->delete($id)) {
-            return $this->respondDeleted(['id' => $id, 'message' => 'Record deleted']);
+        if (!$this->validateOwnership(\App\Models\ClientMobileCheckModel::class, $id)) {
+            return $this->failForbidden('Access denied');
         }
 
-        return $this->failNotFound('Record not found');
+        $model = new \App\Models\ClientMobileCheckModel();
+        $model->delete($id);
+        return $this->respondDeleted(['id' => $id, 'message' => 'Record deleted']);
     }
 
     public function update($id = null)
     {
         if (!$id) {
             return $this->failValidationError('ID is required');
+        }
+
+        if (!$this->validateOwnership(\App\Models\ClientMobileCheckModel::class, $id)) {
+            return $this->failForbidden('Access denied');
         }
 
         $json = $this->request->getJSON();

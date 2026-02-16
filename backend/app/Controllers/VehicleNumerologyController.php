@@ -6,10 +6,14 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\CompoundNumberModel;
 use App\Models\NumerologySystemModel;
 
-class VehicleNumerologyController extends ResourceController
+class VehicleNumerologyController extends BaseController
 {
     public function check()
     {
+        if (!$this->checkModuleAccess('vehicle')) {
+            return $this->failForbidden('Access to Vehicle module requires a Professional subscription.');
+        }
+
         $json = $this->request->getJSON();
         $vehicle = $json->vehicle_number ?? '';
         $vehicleType = $json->vehicle_type ?? '4 Wheeler';
@@ -97,6 +101,7 @@ class VehicleNumerologyController extends ResourceController
         if ($clientId && $saveRecord) {
             $checkModel = new \App\Models\ClientVehicleCheckModel();
             $saveData = [
+                'user_id' => $this->getVendorId(),
                 'client_id' => $clientId,
                 'vehicle_number' => $vehicle,
                 'vehicle_type' => $vehicleType,
@@ -113,6 +118,10 @@ class VehicleNumerologyController extends ResourceController
             ];
 
             if ($existingId) {
+                // Validate ownership before update
+                if (!$this->validateOwnership(\App\Models\ClientVehicleCheckModel::class, $existingId)) {
+                    return $this->failForbidden('Access denied');
+                }
                 $checkModel->update($existingId, $saveData);
                 $savedCheckId = $existingId;
             } else {

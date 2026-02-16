@@ -109,7 +109,7 @@ export default function AdminProfile() {
                             className="w-full bg-input/50 border border-border rounded-xl p-2 outline-none text-muted-foreground cursor-not-allowed"
                         />
                     </div>
-                    <button onClick={handleUpdateProfile} className="bg-primary text-primary-foreground font-bold px-6 py-2 rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md">
+                    <button onClick={handleUpdateProfile} className="bg-astro-gradient text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition-all flex items-center gap-2 shadow-md">
                         <Save size={16} /> Update Profile
                     </button>
                 </div>
@@ -137,7 +137,7 @@ export default function AdminProfile() {
                             className="w-full bg-input/50 border border-border rounded-xl p-2 outline-none text-foreground focus:border-accent transition-colors"
                         />
                     </div>
-                    <button onClick={handleChangePassword} className="bg-primary text-primary-foreground font-bold px-6 py-2 rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md">
+                    <button onClick={handleChangePassword} className="bg-astro-gradient text-white font-bold px-6 py-2 rounded-xl hover:opacity-90 transition-all flex items-center gap-2 shadow-md">
                         <Lock size={16} /> Update Password
                     </button>
                 </div>
