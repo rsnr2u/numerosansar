@@ -16,14 +16,31 @@ class PaymentsController extends BaseController
             return $this->failForbidden('Access denied');
         }
 
+        $limit = $this->request->getGet('limit') ?? 20;
+        $page = $this->request->getGet('page') ?? 1;
+        $offset = ($page - 1) * $limit;
+
         $db = \Config\Database::connect();
         $builder = $db->table('payments p');
         $builder->select('p.*, u.username, u.full_name, sp.name as plan_name');
         $builder->join('users u', 'u.id = p.user_id', 'left');
         $builder->join('subscription_plans sp', 'sp.id = p.plan_id', 'left');
-        $builder->orderBy('p.created_at', 'DESC');
 
-        return $this->respond($builder->get()->getResult());
+        $totalBuilder = clone $builder;
+        $total = $totalBuilder->countAllResults();
+
+        $builder->orderBy('p.created_at', 'DESC');
+        $builder->limit($limit, $offset);
+
+        return $this->respond([
+            'data' => $builder->get()->getResult(),
+            'pagination' => [
+                'total' => $total,
+                'page' => (int) $page,
+                'limit' => (int) $limit,
+                'total_pages' => ceil($total / $limit)
+            ]
+        ]);
     }
 
     public function dashboardStats()

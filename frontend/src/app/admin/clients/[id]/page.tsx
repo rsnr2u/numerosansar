@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { User, Phone, Briefcase, Car, ArrowLeft, Star, Edit, MapPin, Mail, Smartphone, Save, X, Calendar, UserCheck } from "lucide-react";
+import { User, Phone, Briefcase, Car, ArrowLeft, Star, Edit, MapPin, Mail, Smartphone, Save, X, Calendar, UserCheck, Grid } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
@@ -82,6 +82,13 @@ export default function ClientDashboardPage() {
             icon: <Car size={24} className="text-purple-500" />,
             path: `/admin/vehicle-numerology?dob=${client.dob}&vehicle=${encodeURIComponent(confirmedVehicle || '')}&client_id=${client.id}`,
             color: "bg-purple-500/10 border-purple-500/20 hover:border-purple-500/50"
+        },
+        {
+            title: "Lo Shu Grid",
+            desc: "Ancient Chinese magic square analysis.",
+            icon: <Grid size={24} className="text-slate-700" />,
+            path: `/admin/clients/${client.id}/lo-shu-grid`,
+            color: "bg-slate-700/5 border-slate-700/10 hover:border-slate-700/30"
         }
     ];
 

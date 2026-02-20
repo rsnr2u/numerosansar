@@ -29,16 +29,82 @@ class UserController extends ResourceController
             return $this->failForbidden('Access denied');
         }
 
+        // Get filter and pagination parameters
+        $city = $this->request->getGet('city');
+        $month = $this->request->getGet('month');
+        $year = $this->request->getGet('year');
+        $startDate = $this->request->getGet('start_date');
+        $endDate = $this->request->getGet('end_date');
+        $status = $this->request->getGet('status');
+        $searchTerm = $this->request->getGet('search');
+
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        $limit = (int) ($this->request->getGet('limit') ?? 10);
+        $offset = ($page - 1) * $limit;
+
         $db = \Config\Database::connect();
         $builder = $db->table('users u');
         $builder->select('u.id, u.username, u.full_name, u.email, u.mobile, u.business_name, u.city, u.created_at, s.status as sub_status, s.ends_at, sp.name as plan_name, (SELECT COUNT(*) FROM clients WHERE user_id = u.id) as client_count');
         $builder->join('subscriptions s', 's.user_id = u.id', 'left');
         $builder->join('subscription_plans sp', 'sp.id = s.plan_id', 'left');
         $builder->where('u.role', 'numerologist');
+
+        // Apply dynamic filters
+        if (!empty($city)) {
+            $builder->like('u.city', $city);
+        }
+
+        if (!empty($searchTerm)) {
+            $builder->groupStart()
+                ->like('u.username', $searchTerm)
+                ->orLike('u.full_name', $searchTerm)
+                ->orLike('u.email', $searchTerm)
+                ->orLike('u.business_name', $searchTerm)
+                ->groupEnd();
+        }
+
+        if (!empty($status) && $status !== 'all') {
+            if ($status === 'active') {
+                $builder->where('s.status', 'active');
+            } else {
+                $builder->where('s.status !=', 'active');
+            }
+        }
+
+        if (!empty($month)) {
+            $builder->where('MONTH(u.created_at)', $month);
+        }
+
+        if (!empty($year)) {
+            $builder->where('YEAR(u.created_at)', $year);
+        }
+
+        if (!empty($startDate)) {
+            $builder->where('u.created_at >=', $startDate . ' 00:00:00');
+        }
+
+        if (!empty($endDate)) {
+            $builder->where('u.created_at <=', $endDate . ' 23:59:59');
+        }
+
+        // Get total count for pagination metadata
+        $totalBuilder = clone $builder;
+        $total = $totalBuilder->countAllResults();
+
         $builder->orderBy('u.created_at', 'DESC');
+        $builder->limit($limit, $offset);
 
         $vendors = $builder->get()->getResult();
-        return $this->respond($vendors);
+
+        return $this->respond([
+            'data' => $vendors,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'total_pages' => ceil($total / $limit)
+            ]
+        ]);
     }
 
     public function show($id = null)

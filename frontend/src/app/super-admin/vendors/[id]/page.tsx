@@ -8,7 +8,7 @@ import {
     Zap, Users, FileText, Smartphone, Car, ShieldCheck,
     ShieldAlert, ArrowLeft, RefreshCw, XCircle, CheckCircle,
     Eye, Search, History, Sparkles, BrainCircuit, CreditCard,
-    Lock, Activity, Shield
+    Lock, Activity, Shield, X, Save, Code, Plus
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -135,7 +135,7 @@ export default function VendorDetailPage() {
     );
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors"
@@ -143,15 +143,15 @@ export default function VendorDetailPage() {
                 <ArrowLeft size={16} /> Return to Ecosystem
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Profile Section */}
-                <div className="lg:col-span-1 space-y-8">
-                    <div className="bg-white border-2 border-black p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-white border-2 border-black p-6 rounded-2xl shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-6">
                             <div className={`w-3 h-3 rounded-full ${data.profile?.account_status === 'Active' ? 'bg-[#10B981] animate-pulse' : 'bg-red-500'}`}></div>
                         </div>
                         <div className="flex flex-col items-center text-center space-y-4 mb-8">
-                            <div className="w-24 h-24 rounded-3xl bg-black flex items-center justify-center text-white text-4xl font-black italic shadow-xl">
+                            <div className="w-24 h-24 rounded-2xl bg-black flex items-center justify-center text-white text-4xl font-black italic shadow-xl">
                                 {data.profile.full_name?.charAt(0) || data.profile.username?.charAt(0)}
                             </div>
                             <div>
@@ -196,7 +196,7 @@ export default function VendorDetailPage() {
                         </div>
                     </div>
 
-                    <div className="bg-white border border-black/5 p-8 rounded-[2.5rem] shadow-xl space-y-6">
+                    <div className="bg-white border border-black/5 p-6 rounded-2xl shadow-xl space-y-6">
                         <h3 className="text-xs font-black uppercase tracking-widest border-b border-black/5 pb-4">Status Controls</h3>
                         <div className="grid grid-cols-1 gap-3">
                             {data.profile.account_status !== 'Active' && (
@@ -226,11 +226,11 @@ export default function VendorDetailPage() {
                 </div>
 
                 {/* Main Content */}
-                <div className="lg:col-span-2 space-y-8">
+                <div className="lg:col-span-2 space-y-6">
                     {/* Subscription & Usage */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <div className="bg-white border border-black/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col">
-                            <div className="absolute top-0 right-0 p-8">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div className="bg-white border border-black/5 p-6 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+                            <div className="absolute top-0 right-0 p-6">
                                 <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${data.subscription?.status === 'active' ? 'bg-[#10B981]/10 text-[#10B981]' : 'bg-red-500/10 text-red-500'}`}>
                                     {data.subscription?.status || 'Inactive'}
                                 </div>
@@ -282,7 +282,7 @@ export default function VendorDetailPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white border border-black/5 p-8 rounded-[2.5rem] shadow-2xl flex flex-col">
+                        <div className="bg-white border border-black/5 p-6 rounded-2xl shadow-2xl flex flex-col">
                             <h3 className="text-[10px] font-black uppercase tracking-widest mb-6 opacity-20">Usage Infrastructure</h3>
                             <div className="grid grid-cols-2 gap-4 flex-1">
                                 {[
@@ -306,7 +306,7 @@ export default function VendorDetailPage() {
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+                    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit">
                         {[
                             { id: "registry", label: "Client Registry", icon: <Users size={14} /> },
                             { id: "ledger", label: "Financial Ledger", icon: <CreditCard size={14} /> },
@@ -324,8 +324,8 @@ export default function VendorDetailPage() {
 
                     {/* All Clients Registry */}
                     {activeTab === 'registry' && (
-                        <div className="bg-white border border-black/5 rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
-                            <div className="px-10 py-8 border-b border-black/5 flex justify-between items-center bg-slate-50/50">
+                        <div className="bg-white border border-black/5 rounded-2xl shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
+                            <div className="px-6 py-5 border-b border-black/5 flex justify-between items-center bg-slate-50/50">
                                 <div>
                                     <h3 className="text-sm font-black uppercase tracking-[0.3em]">Client Registry</h3>
                                     <p className="text-[9px] font-bold text-black/20 uppercase tracking-widest mt-1">Full Entity Oversight for {data.profile.full_name || data.profile.username}</p>
@@ -348,7 +348,7 @@ export default function VendorDetailPage() {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-black/5">
-                                            <th className="pl-10 pr-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Entity Profile</th>
+                                            <th className="pl-6 pr-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Entity Profile</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Intensity (Checks)</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Registration</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30 text-right">Oversight</th>
@@ -357,7 +357,7 @@ export default function VendorDetailPage() {
                                     <tbody className="divide-y divide-black/5">
                                         {filteredClients.map((client: any) => (
                                             <tr key={client.id} className="hover:bg-[#FAF7F2] transition-colors group">
-                                                <td className="pl-10 pr-6 py-5">
+                                                <td className="pl-6 pr-6 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-black group-hover:text-white transition-all text-xs font-black italic">
                                                             {client.full_name?.charAt(0)}
@@ -378,7 +378,7 @@ export default function VendorDetailPage() {
                                                         {new Date(client.created_at).toLocaleDateString('en-GB')}
                                                     </span>
                                                 </td>
-                                                <td className="px-10 py-5 text-right">
+                                                <td className="px-6 py-5 text-right">
                                                     <button
                                                         onClick={() => fetchClientHistory(client)}
                                                         className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-black hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-sm"
@@ -399,8 +399,8 @@ export default function VendorDetailPage() {
 
                     {/* Financial Ledger */}
                     {activeTab === 'ledger' && (
-                        <div className="bg-white border border-black/5 rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
-                            <div className="px-10 py-8 border-b border-black/5 bg-slate-50/50 flex justify-between items-center">
+                        <div className="bg-white border border-black/5 rounded-2xl shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
+                            <div className="px-6 py-5 border-b border-black/5 bg-slate-50/50 flex justify-between items-center">
                                 <div>
                                     <h3 className="text-sm font-black uppercase tracking-[0.3em]">Financial Ledger</h3>
                                     <p className="text-[9px] font-bold text-black/20 uppercase tracking-widest mt-1">Transaction History & Invoice Archive</p>
@@ -410,7 +410,7 @@ export default function VendorDetailPage() {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-black/5">
-                                            <th className="pl-10 pr-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Invoice ID</th>
+                                            <th className="pl-6 pr-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Invoice ID</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30">Plan</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30 text-center">Amount</th>
                                             <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-black/30 text-right">Status</th>
@@ -419,7 +419,7 @@ export default function VendorDetailPage() {
                                     <tbody className="divide-y divide-black/5">
                                         {(data.payments || []).map((p: any) => (
                                             <tr key={p.id} className="hover:bg-[#FAF7F2] transition-colors">
-                                                <td className="pl-10 pr-6 py-5">
+                                                <td className="pl-6 pr-6 py-5">
                                                     <p className="text-[11px] font-black uppercase tracking-tight italic">#{p.invoice_id}</p>
                                                     <p className="text-[9px] font-bold text-black/20 uppercase tracking-widest">{new Date(p.created_at).toLocaleDateString()}</p>
                                                 </td>
@@ -427,7 +427,7 @@ export default function VendorDetailPage() {
                                                     <span className="text-[10px] font-black uppercase">{p.plan_name}</span>
                                                 </td>
                                                 <td className="px-6 py-5 text-center font-black">₹{p.amount}</td>
-                                                <td className="px-10 py-5 text-right">
+                                                <td className="px-6 py-5 text-right">
                                                     <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${p.status === 'paid' ? 'bg-[#10B981]/10 text-[#10B981]' : 'bg-red-500/10 text-red-500'}`}>
                                                         {p.status}
                                                     </span>
@@ -445,14 +445,14 @@ export default function VendorDetailPage() {
 
                     {/* Security Audit Flux */}
                     {activeTab === 'audit' && (
-                        <div className="bg-white border border-black/5 rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
-                            <div className="px-10 py-8 border-b border-black/5 bg-slate-50/50 flex justify-between items-center">
+                        <div className="bg-white border border-black/5 rounded-2xl shadow-2xl overflow-hidden min-h-[500px] flex flex-col">
+                            <div className="px-6 py-5 border-b border-black/5 bg-slate-50/50 flex justify-between items-center">
                                 <div>
                                     <h3 className="text-sm font-black uppercase tracking-[0.3em]">Security Audit</h3>
                                     <p className="text-[9px] font-bold text-black/20 uppercase tracking-widest mt-1">System interactions & Access Logs</p>
                                 </div>
                             </div>
-                            <div className="p-10 space-y-4">
+                            <div className="p-6 space-y-4">
                                 {(data.audit_logs || []).map((l: any, i: number) => (
                                     <div key={i} className="flex gap-6 p-6 bg-slate-50/50 rounded-3xl border border-black/5 items-center">
                                         <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white shadow-lg">
@@ -496,9 +496,9 @@ export default function VendorDetailPage() {
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                            className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
                         >
-                            <div className="p-10 border-b border-black/5 flex justify-between items-center bg-[#FAF7F2]">
+                            <div className="p-6 border-b border-black/5 flex justify-between items-center bg-[#FAF7F2]">
                                 <div className="flex items-center gap-6">
                                     <div className="w-16 h-16 rounded-2xl bg-black flex items-center justify-center text-white text-2xl font-black italic shadow-xl">
                                         {selectedClient.full_name?.charAt(0)}
@@ -519,7 +519,7 @@ export default function VendorDetailPage() {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-10 space-y-8">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="p-6 bg-slate-50/50 rounded-3xl border border-black/5">
                                         <p className="text-[8px] font-black uppercase tracking-widest text-black/20 mb-2">Primary DOB</p>
@@ -544,7 +544,7 @@ export default function VendorDetailPage() {
                                         {historyLoading ? (
                                             <div className="py-20 text-center animate-pulse text-[10px] font-black uppercase tracking-widest">Querying History Matrix...</div>
                                         ) : history.map((item: any, i: number) => (
-                                            <div key={i} className="flex gap-6 p-6 bg-white border border-black/5 rounded-[2rem] hover:shadow-xl transition-all group relative overflow-hidden">
+                                            <div key={i} className="flex gap-6 p-6 bg-white border border-black/5 rounded-2xl hover:shadow-xl transition-all group relative overflow-hidden">
                                                 {item.is_confirmed === "1" && (
                                                     <div className="absolute top-0 right-0 p-4">
                                                         <div className="px-3 py-1 bg-[#10B981] text-white text-[8px] font-black uppercase tracking-widest rounded-full shadow-lg">Current Validated</div>
@@ -580,15 +580,15 @@ export default function VendorDetailPage() {
                                             </div>
                                         ))}
                                         {history.length === 0 && !historyLoading && (
-                                            <div className="py-20 text-center text-[10px] font-black uppercase text-black/10 tracking-widest italic border-2 border-dashed border-black/5 rounded-[3rem]">No historical check data available for this entity</div>
+                                            <div className="py-20 text-center text-[10px] font-black uppercase text-black/10 tracking-widest italic border-2 border-dashed border-black/5 rounded-3xl">No historical check data available for this entity</div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="p-10 border-t border-black/5 bg-[#FAF7F2]/50 flex justify-between items-center">
+                            <div className="p-6 border-t border-black/5 bg-[#FAF7F2]/50 flex justify-between items-center">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-black/20">Read-Only Supervisory Protocol Enabled</p>
-                                <button onClick={() => setSelectedClient(null)} className="px-8 py-4 bg-black text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#E61111] transition-all shadow-xl">Exit Intel Mode</button>
+                                <button onClick={() => setSelectedClient(null)} className="px-8 py-4 bg-black text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#E61111] transition-all shadow-xl">Exit Intel Mode</button>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -610,14 +610,14 @@ export default function VendorDetailPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+                            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
                         >
-                            <div className="p-8 border-b border-black/5 flex justify-between items-center bg-slate-50/50">
+                            <div className="p-6 border-b border-black/5 flex justify-between items-center bg-slate-50/50">
                                 <h2 className="text-xl font-black uppercase tracking-tight italic">Override Subscription</h2>
                                 <button onClick={() => setIsPlanModalOpen(false)} className="p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
                             </div>
 
-                            <div className="p-8 space-y-6">
+                            <div className="p-6 space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-black/30 ml-1">Target Tier</label>
@@ -656,13 +656,13 @@ export default function VendorDetailPage() {
                                 <div className="pt-4 flex gap-4">
                                     <button
                                         onClick={() => setIsPlanModalOpen(false)}
-                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all"
+                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all"
                                     >
                                         Abort
                                     </button>
                                     <button
                                         onClick={handlePlanUpdate}
-                                        className="flex-2 px-10 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2"
+                                        className="flex-2 px-10 py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2"
                                     >
                                         <Save size={16} /> Finalize Protocol
                                     </button>

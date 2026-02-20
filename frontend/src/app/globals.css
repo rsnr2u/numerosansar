@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    /* 🏥 Corporate Light Theme */
+    /* 🏛️ Corporate Light Theme with Devotional Warmth */
     --background: 210 40% 98%; /* #F8FAFC */
     --foreground: 215 25% 15%; /* #1E293B (Deep Navy) */
 
@@ -21,27 +21,33 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 45 66% 52%; /* Refined Gold #D4AF37 */
+    --accent: 36 80% 50%; /* Sacred Saffron Gold #D4940A */
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 44%; /* Corporate Red #B91C1C */
+    --destructive: 0 84% 44%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 215 25% 15%;
 
-    --radius: 0.5rem; /* Smoother corporate radius */
+    --radius: 0.5rem;
 
-    /* Corporate Palette Extras */
-    --mystic-gold: 45 66% 52%;
-    --mystic-gold-muted: 45 66% 32%;
+    /* 🕉 Devotional Palette */
+    --saffron: 30 90% 52%; /* Warm Saffron #F09819 */
+    --saffron-deep: 24 85% 45%; /* Deep Saffron #D4770B */
+    --divine-gold: 42 78% 55%; /* Divine Gold #DAA520 */
+    --sacred-cream: 40 60% 96%; /* Sacred Cream #FBF7ED */
+    --sacred-maroon: 348 60% 30%; /* Sacred Maroon #7A1E3D */
+    --lotus-pink: 340 50% 60%; /* Lotus Pink #C7607B */
+    --mystic-gold: 42 78% 55%;
+    --mystic-gold-muted: 42 70% 38%;
     --mystic-card-bg: 0 0% 100%;
-    --mystic-glow: 45 66% 52% / 0.05;
+    --mystic-glow: 42 78% 55% / 0.08;
   }
 
   .dark {
-    /* 🏥 Corporate Dark Theme */
+    /* 🏛️ Corporate Dark Theme with Devotional Warmth */
     --background: 222 47% 11%; /* #0F172A */
     --foreground: 210 40% 98%;
 
@@ -60,7 +66,7 @@
     --muted: 217 32% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 45 66% 52%;
+    --accent: 36 80% 55%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 62% 30%;
@@ -70,11 +76,17 @@
     --input: 217 32% 17%;
     --ring: 210 40% 98%;
 
-    /* Mystic Palette Extras (Dark) */
-    --mystic-gold: 45 66% 60%;
-    --mystic-gold-muted: 45 66% 40%;
+    /* Devotional Palette (Dark) */
+    --saffron: 30 90% 58%;
+    --saffron-deep: 24 85% 50%;
+    --divine-gold: 42 78% 62%;
+    --sacred-cream: 40 20% 15%;
+    --sacred-maroon: 348 50% 35%;
+    --lotus-pink: 340 50% 55%;
+    --mystic-gold: 42 78% 62%;
+    --mystic-gold-muted: 42 70% 42%;
     --mystic-card-bg: 222 47% 13%;
-    --mystic-glow: 45 66% 60% / 0.1;
+    --mystic-glow: 42 78% 62% / 0.12;
   }
 }
 
@@ -137,15 +149,20 @@
 
 .premium-card:hover {
   transform: translateY(-2px);
-  border-color: hsl(var(--accent) / 0.3);
+  border-color: hsl(var(--saffron) / 0.3);
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
 }
 
 .text-gradient-gold {
-  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--accent)) 100%);
+  background: linear-gradient(135deg, hsl(var(--saffron-deep)) 0%, hsl(var(--divine-gold)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Devotional Gradient — warm saffron-to-gold hero bg */
+.devotional-gradient {
+  background: linear-gradient(135deg, #1E293B 0%, #2D1B0E 50%, #1E293B 100%);
 }
 
 .bg-gradient-gold,
@@ -157,8 +174,69 @@
   background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
 }
 
+/* Saffron CTA Button */
+.btn-saffron {
+  background: linear-gradient(135deg, #D4940A 0%, #F09819 100%);
+  color: #fff;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(240, 152, 25, 0.3);
+}
+
+.btn-saffron:hover {
+  background: linear-gradient(135deg, #E5A31B 0%, #F5AE3D 100%);
+  box-shadow: 0 8px 24px rgba(240, 152, 25, 0.45);
+  transform: translateY(-1px);
+}
+
+/* Saffron glow on hover */
+.saffron-glow:hover {
+  box-shadow: 0 0 20px hsl(var(--saffron) / 0.25), 0 0 40px hsl(var(--saffron) / 0.1);
+}
+
 .glow-on-hover:hover {
-  box-shadow: 0 0 15px hsl(var(--accent) / 0.2);
+  box-shadow: 0 0 15px hsl(var(--saffron) / 0.2);
+}
+
+/* Sacred geometry watermark */
+.mandala-watermark {
+  position: relative;
+}
+
+.mandala-watermark::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, transparent 30%, transparent 30%),
+              repeating-conic-gradient(from 0deg, hsl(var(--saffron) / 0.03) 0deg 30deg, transparent 30deg 60deg);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Saffron top accent strip */
+.saffron-accent-top {
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, #D4940A, #F09819, #DAA520, #F09819, #D4940A) 1;
+}
+
+/* Devotional divider */
+.devotional-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.devotional-divider::before,
+.devotional-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--saffron) / 0.3), transparent);
 }
 
 /* Animations */
@@ -174,8 +252,26 @@
   }
 }
 
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes slow-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+.animate-slow-spin {
+  animation: slow-spin 30s linear infinite;
 }
 
 /* Result Colors - Custom utility classes for results */

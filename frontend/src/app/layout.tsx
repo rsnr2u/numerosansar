@@ -15,8 +15,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Panel",
-  description: "Numerology Admin Panel",
+  title: "NumeroSansar — Sacred Numerology Platform",
+  description: "Professional numerology analytics rooted in ancient Vedic wisdom. Empowering consultants with divine precision.",
 };
 
 export default function RootLayout({

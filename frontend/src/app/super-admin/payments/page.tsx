@@ -8,16 +8,31 @@ import { api } from "@/lib/api";
 export default function PaymentsPage() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [currentPage, itemsPerPage]);
 
     const fetchTransactions = () => {
         setLoading(true);
-        api.get("/admin/payments")
+        api.get(`/admin/payments?page=${currentPage}&limit=${itemsPerPage}`)
             .then(res => res.json())
-            .then(data => setTransactions(data))
+            .then(resData => {
+                if (resData && resData.data && Array.isArray(resData.data)) {
+                    setTransactions(resData.data);
+                    setTotalPages(resData.pagination.total_pages || 1);
+                } else {
+                    setTransactions([]);
+                    setTotalPages(1);
+                }
+            })
+            .catch(err => {
+                console.error("Fetch transactions failed:", err);
+                setTransactions([]);
+            })
             .finally(() => setLoading(false));
     };
 
@@ -28,7 +43,7 @@ export default function PaymentsPage() {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {/* Header Area */}
             <div className="flex items-center justify-between px-2">
                 <div>
@@ -46,9 +61,9 @@ export default function PaymentsPage() {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {stats.map((stat, i) => (
-                    <div key={i} className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all">
+                    <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all">
                         <div className="flex items-center justify-between mb-6">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                                 {stat.icon}
@@ -64,7 +79,7 @@ export default function PaymentsPage() {
             </div>
 
             {/* Search Bar */}
-            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1 max-w-xl">
                     <div className="p-2 text-slate-400"><Search size={18} /></div>
                     <input
@@ -81,7 +96,7 @@ export default function PaymentsPage() {
             </div>
 
             {/* Transaction Ledger */}
-            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -95,9 +110,9 @@ export default function PaymentsPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">Synchronizing Ledger with Global Vault...</td></tr>
+                                <tr><td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">Synchronizing Ledger with Global Vault...</td></tr>
                             ) : transactions.length === 0 ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Zero Transaction Flux Detected</td></tr>
+                                <tr><td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Zero Transaction Flux Detected</td></tr>
                             ) : transactions.map((tx) => (
                                 <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-10 py-6">
@@ -131,6 +146,41 @@ export default function PaymentsPage() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="px-4 py-2 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                <div className="flex items-center gap-6">
+                    <span>Page {currentPage} of {totalPages || 1}</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(parseInt(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="bg-transparent border-none outline-none cursor-pointer hover:text-black transition-colors bg-slate-50 px-2 py-1 rounded-lg"
+                    >
+                        <option value="10">10 nodes</option>
+                        <option value="20">20 nodes</option>
+                        <option value="50">50 nodes</option>
+                    </select>
+                </div>
+                <div className="flex gap-6">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
+                    >
+                        Previous Sequence
+                    </button>
+                    <button
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
+                    >
+                        Next Sequence
+                    </button>
                 </div>
             </div>
         </div>

@@ -151,24 +151,19 @@ export default function SuperAdminSectorsPage() {
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700">
+            {/* Header Area */}
+            <div className="flex justify-between items-center px-1">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter flex items-center gap-3 text-slate-900">
-                        <span className="p-3 bg-black text-white rounded-2xl shadow-xl shadow-black/10">
-                            <Briefcase size={28} />
-                        </span>
-                        BUSINESS <span className="text-slate-400 font-normal ml-1">SECTORS</span>
-                    </h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-3 ml-1">Industry Vibration Matrix</p>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Business Sectors</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Economic Domain Segmentation & Mapping</p>
                 </div>
                 <div className="flex gap-4">
                     {sectors.length === 0 && (
                         <button
                             onClick={handleSeed}
                             disabled={isSaving}
-                            className="px-6 py-3 bg-slate-50 border border-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2"
+                            className="px-6 py-3 bg-slate-50 border border-slate-100 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2"
                         >
                             <Database size={16} /> Seed Base Data
                         </button>
@@ -179,7 +174,7 @@ export default function SuperAdminSectorsPage() {
                             setFormData({ sector_name: "", primary_planet: "", chaldean_targets: "", pythagorean_targets: "", lucky_numbers: "" });
                             setIsModalOpen(true);
                         }}
-                        className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl transition-all flex items-center gap-2"
+                        className="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl transition-all flex items-center gap-2"
                     >
                         <Plus size={16} /> Architect New Sector
                     </button>
@@ -193,7 +188,7 @@ export default function SuperAdminSectorsPage() {
                     <input
                         type="text"
                         placeholder="Scan Industry Profiles..."
-                        className="w-full bg-white border border-slate-100 rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 outline-none focus:border-black/20 transition-all"
+                        className="w-full bg-white border border-slate-100 rounded-xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 outline-none focus:border-black/20 transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -203,14 +198,14 @@ export default function SuperAdminSectorsPage() {
             {/* Content Grid */}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-50 rounded-[2.5rem] animate-pulse" />)}
+                    {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-50 rounded-2xl animate-pulse" />)}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredSectors.map(sector => (
                         <motion.div
                             key={sector.id}
-                            className="bg-white border border-slate-100 p-8 rounded-[2.5rem] relative overflow-hidden shadow-xl shadow-slate-200/50 group"
+                            className="bg-white border border-slate-100 p-6 rounded-2xl relative overflow-hidden shadow-xl shadow-slate-200/50 group"
                         >
                             <div className="flex justify-between items-start gap-4 mb-6">
                                 <div>
@@ -280,32 +275,32 @@ export default function SuperAdminSectorsPage() {
                 {isModalOpen && (
                     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/20 backdrop-blur-md" onClick={() => setIsModalOpen(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-white border border-slate-100 rounded-[3rem] shadow-2xl p-10 overflow-hidden">
-                            <div className="flex justify-between items-center mb-10">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 overflow-hidden">
+                            <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-black italic uppercase tracking-tight text-slate-900">{editingSector ? 'RE-ARCHITECT' : 'ARCHITECT'} <span className="text-slate-400 font-normal">PROFILE</span></h2>
                                 <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-black transition-colors"><X size={24} /></button>
                             </div>
                             <form onSubmit={handleSave} className="space-y-6">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Industry Sector Name</label>
-                                    <input required value={formData.sector_name} onChange={e => setFormData({ ...formData, sector_name: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
+                                    <input required value={formData.sector_name} onChange={e => setFormData({ ...formData, sector_name: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Primary Planet Alignment</label>
-                                    <input value={formData.primary_planet} onChange={e => setFormData({ ...formData, primary_planet: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
+                                    <input value={formData.primary_planet} onChange={e => setFormData({ ...formData, primary_planet: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Chaldean (Compound)</label>
-                                        <input value={formData.chaldean_targets} onChange={e => setFormData({ ...formData, chaldean_targets: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
+                                        <input value={formData.chaldean_targets} onChange={e => setFormData({ ...formData, chaldean_targets: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pythagorean (Master)</label>
-                                        <input value={formData.pythagorean_targets} onChange={e => setFormData({ ...formData, pythagorean_targets: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
+                                        <input value={formData.pythagorean_targets} onChange={e => setFormData({ ...formData, pythagorean_targets: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 font-bold text-sm text-slate-900 outline-none focus:border-black/20 transition-all" />
                                     </div>
                                 </div>
                                 <div className="pt-6">
-                                    <button type="submit" disabled={isSaving} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-sm hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                                    <button type="submit" disabled={isSaving} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2">
                                         <Save size={18} /> {isSaving ? 'Synching...' : 'Finalize Profile'}
                                     </button>
                                 </div>

@@ -9,40 +9,60 @@ export default function AuditLogPage() {
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
+
+    // Search Debouncing
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
-        api.get("/admin/audit-logs")
-            .then(res => res.json())
-            .then(data => setLogs(data))
-            .finally(() => setLoading(false));
-    }, []);
+        fetchLogs();
+    }, [debouncedSearch, currentPage, itemsPerPage]);
 
-    const filteredLogs = logs.filter(log =>
-        log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.performer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.details?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const fetchLogs = () => {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (debouncedSearch) params.append('search', debouncedSearch);
+        params.append('page', currentPage.toString());
+        params.append('limit', itemsPerPage.toString());
+
+        api.get(`/admin/audit-logs?${params.toString()}`)
+            .then(res => res.json())
+            .then(resData => {
+                if (resData && resData.data && Array.isArray(resData.data)) {
+                    setLogs(resData.data);
+                    setTotalPages(resData.pagination.total_pages || 1);
+                } else {
+                    setLogs(Array.isArray(resData) ? resData : []);
+                    setTotalPages(1);
+                }
+            })
+            .catch(err => {
+                console.error("Fetch logs failed:", err);
+                setLogs([]);
+            })
+            .finally(() => setLoading(false));
+    };
+
+
 
     return (
-        <div className="space-y-8">
-            {/* Header Area */}
-            <div className="flex items-center justify-between px-2">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Security Audit</h1>
-                    <p className="text-sm font-medium text-slate-500">Immutable platform governance and historical activity ledger.</p>
-                </div>
-                <div className="flex gap-3">
-                    <button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
-                        <Filter size={14} /> Filter Logic
-                    </button>
-                    <button className="px-5 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#E61111] transition-all flex items-center gap-2 shadow-lg">
-                        <Activity size={14} /> Live Monitor
-                    </button>
-                </div>
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-4xl font-black tracking-tighter uppercase italic">Security Audit Logs</h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Global Transaction & Access Registry</p>
             </div>
 
             {/* Matrix Filter */}
-            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1 max-w-xl">
                     <div className="p-2 text-slate-400"><Search size={18} /></div>
                     <input
@@ -61,24 +81,23 @@ export default function AuditLogPage() {
             </div>
 
             {/* Audit Table */}
-            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Governance Action</th>
-                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Actor Entity</th>
-                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Activity Details</th>
-                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">IP Node</th>
-                                <th className="px-10 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Sequence Time</th>
+                            <tr className="border-b border-slate-100">
+                                <th className="pl-6 pr-4 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Action Matrix</th>
+                                <th className="px-4 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Security Principal</th>
+                                <th className="px-4 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Sequence Origin</th>
+                                <th className="px-6 py-5 text-[9px] font-black uppercase tracking-[0.25em] text-slate-400 text-right">Chronology</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">De-encrypting Historical Ledger Flow...</td></tr>
-                            ) : filteredLogs.length === 0 ? (
-                                <tr><td colSpan={5} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Historical Void: No Activity Detected</td></tr>
-                            ) : filteredLogs.map((log) => (
+                                <tr><td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">De-encrypting Historical Ledger Flow...</td></tr>
+                            ) : logs.length === 0 ? (
+                                <tr><td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Historical Void: No Activity Detected</td></tr>
+                            ) : logs.map((log) => (
                                 <tr key={log.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-10 py-6">
                                         <div className="flex items-center gap-3">
@@ -116,6 +135,42 @@ export default function AuditLogPage() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="px-4 py-2 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                <div className="flex items-center gap-6">
+                    <span>Page {currentPage} of {totalPages || 1}</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(parseInt(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="bg-transparent border-none outline-none cursor-pointer hover:text-black transition-colors bg-slate-50 px-2 py-1 rounded-lg"
+                    >
+                        <option value="10">10 nodes</option>
+                        <option value="20">20 nodes</option>
+                        <option value="50">50 nodes</option>
+                        <option value="100">100 nodes</option>
+                    </select>
+                </div>
+                <div className="flex gap-6">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
+                    >
+                        Previous Sequence
+                    </button>
+                    <button
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
+                    >
+                        Next Sequence
+                    </button>
                 </div>
             </div>
         </div>

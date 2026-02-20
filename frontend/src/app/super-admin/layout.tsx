@@ -13,7 +13,8 @@ import {
     Sparkles,
     Zap,
     Search,
-    Briefcase
+    Briefcase,
+    BrainCircuit
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -63,6 +64,7 @@ export default function SuperAdminLayout({
             items: [
                 { name: "Numerologists", icon: <Users size={18} />, path: "/super-admin/vendors" },
                 { name: "Plan Architecture", icon: <Zap size={18} />, path: "/super-admin/plans" },
+                { name: "AI Intelligence", icon: <BrainCircuit size={18} />, path: "/super-admin/ai" },
             ]
         },
         {
@@ -82,7 +84,7 @@ export default function SuperAdminLayout({
         <div className="min-h-screen bg-[#F8F9FB] text-[#2D2926] flex font-sans">
             {/* Sidebar */}
             <aside className="w-[280px] bg-white border-r border-slate-200 flex flex-col fixed h-full z-30 shadow-sm">
-                <div className="p-8 pb-4">
+                <div className="p-6 pb-2">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shadow-lg">
                             <ShieldCheck className="text-[#E61111]" size={24} />
@@ -91,7 +93,7 @@ export default function SuperAdminLayout({
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 py-8 overflow-y-auto space-y-8">
+                <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-6">
                     {navGroups.map((group, gIdx) => (
                         <div key={gIdx} className="space-y-2">
                             <p className="px-4 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">{group.label}</p>
@@ -134,22 +136,23 @@ export default function SuperAdminLayout({
                         <span>Terminate Session</span>
                     </button>
 
-                    <div className="p-4 bg-slate-50 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white text-[10px] font-black uppercase shadow-sm">SA</div>
-                            <div>
-                                <p className="text-xs font-black truncate">Super Admin</p>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Master Root</p>
-                            </div>
+                    <Link
+                        href="/super-admin/profile"
+                        className="p-4 bg-slate-50 rounded-xl flex items-center gap-3 hover:bg-slate-100 transition-all group"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white text-[10px] font-black uppercase shadow-sm group-hover:scale-110 transition-transform">SA</div>
+                        <div>
+                            <p className="text-xs font-black truncate">Super Admin</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Master Root</p>
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 ml-[280px] flex flex-col min-h-screen">
+            <div className="flex-1 ml-[280px] flex flex-col">
                 {/* Topbar */}
-                <header className="h-[80px] bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 flex items-center justify-between px-10 shadow-sm">
+                <header className="h-[64px] bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20 flex items-center justify-between px-6 shadow-sm">
                     <div className="flex items-center gap-4 w-full max-w-xl">
                         <div className="p-2 text-slate-400">
                             <Search size={18} />
@@ -201,18 +204,11 @@ export default function SuperAdminLayout({
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 p-10 max-w-7xl w-full mx-auto">
-                    {children}
-                </main>
-
-                <footer className="px-10 py-6 border-t border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex justify-between items-center bg-white">
-                    <span>© 2026 MasterOS Collective</span>
-                    <div className="flex gap-6">
-                        <a href="#" className="hover:text-black transition-colors">Privacy</a>
-                        <a href="#" className="hover:text-black transition-colors">Security</a>
-                        <a href="#" className="hover:text-black transition-colors">Audit</a>
+                <main className="flex-1 bg-slate-50 p-6 lg:p-10 overflow-x-hidden">
+                    <div className="max-w-7xl mx-auto">
+                        {children}
                     </div>
-                </footer>
+                </main>
             </div>
         </div>
     );

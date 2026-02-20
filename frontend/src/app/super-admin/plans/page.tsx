@@ -95,16 +95,16 @@ export default function PlansPage() {
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Plan Architecture</h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Configure Membership Tiers</p>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Subscription Protocols</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Membership Tiers & Access Logic Blueprint</p>
                 </div>
 
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:shadow-2xl transition-all active:scale-95"
+                    className="flex items-center gap-2 px-8 py-4 bg-black text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-2xl transition-all active:scale-95"
                 >
                     <Plus size={16} /> Architect New Plan
                 </button>
@@ -117,10 +117,10 @@ export default function PlansPage() {
                     <motion.div
                         key={plan.id}
                         layoutId={plan.id?.toString()}
-                        className="bg-white border border-black/5 rounded-[2.5rem] p-8 shadow-xl flex flex-col group relative"
+                        className="bg-white border border-black/5 rounded-2xl p-6 shadow-xl flex flex-col group relative"
                     >
                         <div className="flex justify-between items-start mb-6">
-                            <div className="p-3 bg-black/5 rounded-2xl text-black">
+                            <div className="p-3 bg-black/5 rounded-xl text-black">
                                 <Zap size={20} />
                             </div>
                             <div className="flex gap-2">
@@ -171,14 +171,14 @@ export default function PlansPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+                            className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden"
                         >
-                            <div className="p-8 border-b border-black/5 flex justify-between items-center">
+                            <div className="p-6 border-b border-black/5 flex justify-between items-center">
                                 <h2 className="text-xl font-black uppercase tracking-tight italic">Blueprint: {editingPlan.id ? 'Refine Plan' : 'New Plan'}</h2>
                                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
                             </div>
 
-                            <form onSubmit={handleSave} className="p-8 space-y-6">
+                            <form onSubmit={handleSave} className="p-6 space-y-5">
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-black/30 ml-1">Plan Name</label>
@@ -187,7 +187,7 @@ export default function PlansPage() {
                                             required
                                             value={editingPlan.name}
                                             onChange={e => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                                            className="w-full bg-[#FAF7F2] border border-black/5 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                            className="w-full bg-[#FAF7F2] border border-black/5 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -243,13 +243,13 @@ export default function PlansPage() {
                                     <button
                                         type="button"
                                         onClick={() => setIsModalOpen(false)}
-                                        className="flex-1 py-4 bg-black/5 text-black/40 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-black/10 transition-all"
+                                        className="flex-1 py-4 bg-black/5 text-black/40 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-black/10 transition-all"
                                     >
                                         Abort
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-2 px-10 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2"
+                                        className="flex-2 px-10 py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2"
                                     >
                                         <Save size={16} /> Finalize Blueprint
                                     </button>

@@ -21,17 +21,23 @@ export default function SuperAdminDashboard() {
         try {
             const [statsRes, vendorsRes, regRes, trendRes, logRes] = await Promise.all([
                 api.get('/admin/payments/stats'),
-                api.get('/admin/vendors'),
+                api.get('/admin/vendors?limit=10'), // Limit to 10 for dashboard overview
                 api.get('/admin/registration-stats'),
                 api.get('/admin/payments/trends'),
-                api.get('/admin/audit-logs')
+                api.get('/admin/audit-logs?limit=5')
             ]);
 
             if (statsRes.ok) setStats(await statsRes.json());
-            if (vendorsRes.ok) setVendors(await vendorsRes.json());
+            if (vendorsRes.ok) {
+                const vendorData = await vendorsRes.json();
+                setVendors(vendorData.data || []);
+            }
             if (regRes.ok) setRegStats(await regRes.json());
             if (trendRes.ok) setTrends(await trendRes.json());
-            if (logRes.ok) setLogs(await logRes.json());
+            if (logRes.ok) {
+                const logData = await logRes.json();
+                setLogs(Array.isArray(logData) ? logData : (logData.data || []));
+            }
         } catch (err) {
             console.error("Dashboard Fetch Error:", err);
         } finally {
@@ -61,7 +67,7 @@ export default function SuperAdminDashboard() {
     });
 
     return (
-        <div className="space-y-10 pb-20">
+        <div className="space-y-6 pb-12">
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -82,7 +88,7 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Top Overview Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                     title="Active Vendors"
                     value={stats?.total_vendors || 0}
@@ -107,10 +113,10 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Middle Section: Schedule & Calendar */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Timeline Visualization: Real Registration Flow */}
-                <div className="lg:col-span-9 bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-8 px-2">
+                <div className="lg:col-span-9 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6 px-2">
                         <div className="flex items-center gap-6">
                             <h3 className="text-xl font-black tracking-tighter italic">Registration Pulse</h3>
                             <div className="flex gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
@@ -146,15 +152,15 @@ export default function SuperAdminDashboard() {
 
                 {/* Right Side: Subscription Intel */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm h-full flex flex-col">
-                        <div className="flex items-center justify-between mb-6">
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm h-full flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-black uppercase tracking-widest italic">Subscription State</h3>
                             <div className="text-slate-300"><Activity size={16} /></div>
                         </div>
 
-                        <div className="mb-10 text-center py-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                        <div className="mb-6 text-center py-4 bg-slate-50 rounded-2xl border border-slate-100">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Active Pipelines</p>
-                            <h4 className="text-5xl font-black tracking-tighter italic">{stats?.active_subs || 0}</h4>
+                            <h4 className="text-4xl font-black tracking-tighter italic">{stats?.active_subs || 0}</h4>
                         </div>
 
                         <div className="space-y-6 flex-1">
@@ -173,7 +179,7 @@ export default function SuperAdminDashboard() {
 
                         <button
                             onClick={() => window.location.href = '/super-admin/vendors'}
-                            className="w-full mt-8 py-4 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black hover:text-white transition-all shadow-sm"
+                            className="w-full mt-6 py-4 bg-slate-100 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-black hover:text-white transition-all shadow-sm"
                         >
                             Manage Ecosystem
                         </button>
@@ -182,10 +188,10 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Bottom Section: Flux Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* 1. Real System Alerts (Based on failed logs/subs) */}
-                <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-black tracking-tight italic">System Alerts</h3>
                         <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Live Pulse</span>
                     </div>
@@ -198,8 +204,8 @@ export default function SuperAdminDashboard() {
                 </div>
 
                 {/* 2. Real Revenue Flow (Ecosystem Trends) */}
-                <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-black tracking-tight italic">Revenue Flux</h3>
                         <div className="flex gap-2">
                             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -232,8 +238,8 @@ export default function SuperAdminDashboard() {
                 </div>
 
                 {/* 3. Real Global Activity Feed (Audit Logs) */}
-                <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-black tracking-tight italic">Audit Flux</h3>
                         <button onClick={() => window.location.href = '/super-admin/audit-logs'} className="text-[9px] font-black uppercase text-[#E61111]">Deep Seq</button>
                     </div>
@@ -260,8 +266,8 @@ export default function SuperAdminDashboard() {
 
 function StatCard({ title, value, icon, color, actionIcon }: any) {
     return (
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm group hover:shadow-lg transition-all relative overflow-hidden">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group hover:shadow-lg transition-all relative overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
                     {icon}
                 </div>

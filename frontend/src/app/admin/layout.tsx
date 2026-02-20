@@ -20,7 +20,9 @@ import {
     ChevronDown,
     LayoutDashboard,
     BriefcaseBusiness,
-    ShieldCheck
+    ShieldCheck,
+    Grid,
+    Globe
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -211,6 +213,10 @@ export default function AdminLayout({
         { name: "Auspicious", icon: <Star size={14} />, path: "/admin/auspicious" },
         { name: "Vowels", icon: <AlertOctagon size={14} />, path: "/admin/vowel-consonant" },
         { name: "Sectors", icon: <BriefcaseBusiness size={14} />, path: "/admin/business-sectors" },
+        { name: "Lucky Names", icon: <Sparkles size={14} />, path: "/admin/lucky-name-numbers" },
+        { name: "Lo Shu Meanings", icon: <Grid size={14} />, path: "/admin/lo-shu-meanings" },
+        { name: "Kua Details", icon: <Globe size={14} />, path: "/admin/kua-details" },
+        { name: "Grid Master", icon: <Database size={14} />, path: "/admin/lo-shu-grid-master" },
     ];
 
     const settingsMenu = [

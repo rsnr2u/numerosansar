@@ -97,5 +97,21 @@ $routes->group('api', function ($routes) {
         $routes->get('business-lucky-numbers', 'BusinessLuckyNumberController::index');
         $routes->post('business-lucky-numbers', 'BusinessLuckyNumberController::save');
         $routes->delete('business-lucky-numbers/(:num)', 'BusinessLuckyNumberController::delete/$1');
+
+        // Lucky Name Numbers
+        $routes->get('lucky-name-numbers', 'Admin\LuckyNameNumberController::index');
+        $routes->post('lucky-name-numbers', 'Admin\LuckyNameNumberController::save');
+        $routes->delete('lucky-name-numbers/(:num)', 'Admin\LuckyNameNumberController::delete/$1');
+
+        // Lo Shu Grid & Kua
+        $routes->get('lo-shu/meanings', 'Admin\LoShuController::listMeanings');
+        $routes->post('lo-shu/meanings', 'Admin\LoShuController::saveMeaning');
+        $routes->delete('lo-shu/meanings/(:num)', 'Admin\LoShuController::deleteMeaning/$1');
+        $routes->get('lo-shu/kua', 'Admin\LoShuController::listKuaDetails');
+        $routes->post('lo-shu/kua', 'Admin\LoShuController::saveKuaDetail');
+        $routes->delete('lo-shu/kua/(:num)', 'Admin\LoShuController::deleteKuaDetail/$1');
+        $routes->get('lo-shu/grid', 'Admin\LoShuGridController::index');
+        $routes->post('lo-shu/grid', 'Admin\LoShuGridController::create');
+        $routes->delete('lo-shu/grid/(:num)', 'Admin\LoShuGridController::delete/$1');
     });
 });

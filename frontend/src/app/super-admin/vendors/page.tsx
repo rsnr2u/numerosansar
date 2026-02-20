@@ -20,7 +20,8 @@ import {
     X,
     Save,
     User,
-    Lock
+    Lock,
+    Plus
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
@@ -30,7 +31,11 @@ export default function VendorsPage() {
     const [vendors, setVendors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
     const [filterStatus, setFilterStatus] = useState("all"); // all, active, suspended
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [newVendor, setNewVendor] = useState({
@@ -47,14 +52,33 @@ export default function VendorsPage() {
     });
     const [allPlans, setAllPlans] = useState<any[]>([]);
 
+    // Advanced Filters State
+    const [filters, setFilters] = useState({
+        city: "",
+        month: "",
+        year: "",
+        start_date: "",
+        end_date: ""
+    });
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    // Search Debouncing
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1); // Reset to page 1 on search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
     useEffect(() => {
         fetchVendors();
         fetchPlans();
-    }, []);
+    }, [filterStatus, filters, debouncedSearch, currentPage, itemsPerPage]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, filterStatus]);
+    }, [filterStatus, filters]);
 
     const fetchPlans = async () => {
         try {
@@ -67,10 +91,46 @@ export default function VendorsPage() {
 
     const fetchVendors = () => {
         setLoading(true);
-        api.get("/admin/vendors")
+        const params = new URLSearchParams();
+        if (filters.city) params.append('city', filters.city);
+        if (filters.month) params.append('month', filters.month);
+        if (filters.year) params.append('year', filters.year);
+        if (filters.start_date) params.append('start_date', filters.start_date);
+        if (filters.end_date) params.append('end_date', filters.end_date);
+        if (filterStatus !== 'all') params.append('status', filterStatus);
+        if (debouncedSearch) params.append('search', debouncedSearch);
+        params.append('page', currentPage.toString());
+        params.append('limit', itemsPerPage.toString());
+
+        api.get(`/admin/vendors?${params.toString()}`)
             .then(res => res.json())
-            .then(data => setVendors(data))
+            .then(resData => {
+                if (resData && resData.data && Array.isArray(resData.data)) {
+                    setVendors(resData.data);
+                    setTotalPages(resData.pagination.total_pages || 1);
+                } else {
+                    console.error("API Error Response:", resData);
+                    setVendors([]);
+                    setTotalPages(1);
+                }
+            })
+            .catch(err => {
+                console.error("Fetch vendors failed:", err);
+                setVendors([]);
+                setTotalPages(1);
+            })
             .finally(() => setLoading(false));
+    };
+
+    const resetFilters = () => {
+        setFilters({
+            city: "",
+            month: "",
+            year: "",
+            start_date: "",
+            end_date: ""
+        });
+        setFilterStatus("all");
     };
 
     const handleStatusToggle = async (userId: number, currentStatus: string) => {
@@ -113,105 +173,160 @@ export default function VendorsPage() {
 
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
 
-    const filteredVendors = Array.isArray(vendors) ? vendors.filter(v => {
-        const matchesSearch = v.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            v.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            v.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            v.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            v.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            v.mobile?.includes(searchTerm);
-
-        const matchesFilter = filterStatus === "all" ||
-            (filterStatus === "active" && v.sub_status === "active") ||
-            (filterStatus === "suspended" && v.sub_status !== "active");
-
-        return matchesSearch && matchesFilter;
-    }) : [];
-
     const handleSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
         }
         setSortConfig({ key, direction });
+        // NOTE: Server-side sorting can be implemented later. For now, we'll keep the client-side UI of sorting
+        // but it will only sort the CURRENT page. Full global sort requires server-side logic update.
     };
 
-    const sortedVendors = [...filteredVendors].sort((a, b) => {
+    const displayVendors = [...vendors].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
-
         let valA = a[key] || '';
         let valB = b[key] || '';
-
         if (key === 'client_count') {
             valA = parseInt(valA) || 0;
             valB = parseInt(valB) || 0;
         }
-
         if (valA < valB) return direction === 'asc' ? -1 : 1;
         if (valA > valB) return direction === 'asc' ? 1 : -1;
         return 0;
     });
 
-    // Pagination logic (client-side for now)
-    const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 10;
-    const totalPages = Math.ceil(sortedVendors.length / pageSize);
-    const paginatedVendors = sortedVendors.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
     return (
-        <div className="space-y-8">
-            {/* Header Area */}
-            <div className="flex items-center justify-between px-2">
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Numerologists</h1>
-                    <p className="text-sm font-medium text-slate-500">Manage Numerologists and platform membership access.</p>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Ecosystem Registry</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Vendor Network Node Management</p>
                 </div>
-                <div className="flex gap-3">
-                    <button className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
-                        <Filter size={14} /> Refine Matrix
-                    </button>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="px-5 py-2.5 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#E61111] transition-all flex items-center gap-2 shadow-lg"
-                    >
-                        Add New Numerologist
-                    </button>
-                </div>
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 px-8 py-4 bg-black text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-2xl transition-all"
+                >
+                    <Plus size={16} /> Architect New Entity
+                </button>
             </div>
 
             {/* Registry Search & Filters */}
-            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1 max-w-xl">
-                    <div className="p-2 text-slate-400"><Search size={18} /></div>
-                    <input
-                        type="text"
-                        placeholder="Search by name, professional entity, or email..."
-                        className="bg-transparent w-full text-sm font-medium outline-none placeholder:text-slate-300"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="flex items-center gap-6">
-                    <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest text-slate-300">
-                        <span
-                            onClick={() => setFilterStatus("all")}
-                            className={`${filterStatus === 'all' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
-                        >All Vendors</span>
-                        <span
-                            onClick={() => setFilterStatus("active")}
-                            className={`${filterStatus === 'active' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
-                        >Active Only</span>
-                        <span
-                            onClick={() => setFilterStatus("suspended")}
-                            className={`${filterStatus === 'suspended' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
-                        >Suspended</span>
+            <div className="space-y-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 max-w-xl">
+                        <div className="p-2 text-slate-400"><Search size={18} /></div>
+                        <input
+                            type="text"
+                            placeholder="Search by name, professional entity, or email..."
+                            className="bg-transparent w-full text-sm font-medium outline-none placeholder:text-slate-300"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest text-slate-300 mr-4 border-r border-slate-100 pr-4">
+                            <span
+                                onClick={() => setFilterStatus("all")}
+                                className={`${filterStatus === 'all' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
+                            >All</span>
+                            <span
+                                onClick={() => setFilterStatus("active")}
+                                className={`${filterStatus === 'active' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
+                            >Active</span>
+                            <span
+                                onClick={() => setFilterStatus("suspended")}
+                                className={`${filterStatus === 'suspended' ? 'text-black' : 'hover:text-black'} cursor-pointer transition-colors`}
+                            >Suspended</span>
+                        </div>
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isFilterOpen ? 'bg-black text-white shadow-lg' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-black'}`}
+                        >
+                            <Filter size={14} /> {isFilterOpen ? 'Close Filters' : 'Advanced Filters'}
+                        </button>
                     </div>
                 </div>
+
+                {/* Advanced Filter Panel */}
+                <AnimatePresence>
+                    {isFilterOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
+                        >
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
+                                        <MapPin size={12} /> Geographic Node (City)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Mumbai, Universal"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 px-4 font-bold text-xs outline-none focus:border-black transition-all"
+                                        value={filters.city}
+                                        onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
+                                        <Plus size={12} /> Temporal Cycle (Month)
+                                    </label>
+                                    <select
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 px-4 font-bold text-xs outline-none focus:border-black transition-all appearance-none cursor-pointer"
+                                        value={filters.month}
+                                        onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                                    >
+                                        <option value="">All Months</option>
+                                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
+                                            <option key={m} value={i + 1}>{m}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
+                                        Starting Vector
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 font-bold text-xs outline-none focus:border-black transition-all"
+                                        value={filters.start_date}
+                                        onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
+                                        Ending Vector
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 font-bold text-xs outline-none focus:border-black transition-all"
+                                        value={filters.end_date}
+                                        onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="bg-slate-50 p-4 px-6 flex justify-between items-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
+                                    <ShieldCheck size={14} /> Filtering protocol active. results update in real-time.
+                                </p>
+                                <button
+                                    onClick={resetFilters}
+                                    className="px-4 py-2 bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                                >
+                                    Reset Scanners
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Table Registry */}
-            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -226,10 +341,10 @@ export default function VendorsPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr><td colSpan={6} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">Initializing Ecosystem Scanner...</td></tr>
-                            ) : paginatedVendors.length === 0 ? (
-                                <tr><td colSpan={6} className="p-20 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">No Entities Detected in Search Flux</td></tr>
-                            ) : paginatedVendors.map((vendor) => (
+                                <tr><td colSpan={6} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] animate-pulse">Initializing Ecosystem Scanner...</td></tr>
+                            ) : displayVendors.length === 0 ? (
+                                <tr><td colSpan={6} className="py-12 text-center text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">No Entities Detected in Search Flux</td></tr>
+                            ) : displayVendors.map((vendor) => (
                                 <tr key={vendor.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-10 py-6">
                                         <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.location.href = `/super-admin/vendors/${vendor.id}`}>
@@ -313,20 +428,44 @@ export default function VendorsPage() {
             </div>
 
             <div className="px-4 py-2 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                <span>Showing {paginatedVendors.length} of {filteredVendors.length} active nodes in current viewport</span>
-                <div className="flex gap-4">
+                <div className="flex items-center gap-6">
+                    <span>Showing page {currentPage} of {totalPages || 1}</span>
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                            setItemsPerPage(parseInt(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="bg-transparent border-none outline-none cursor-pointer hover:text-black transition-colors bg-slate-50 px-2 py-1 rounded-lg"
+                    >
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
+                <div className="flex gap-6">
                     <button
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className="hover:text-black cursor-pointer disabled:opacity-20"
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
                     >
                         Previous Matrix
                     </button>
-                    <span className="text-black">Page {currentPage} of {totalPages || 1}</span>
+                    <div className="flex gap-2">
+                        {[...Array(totalPages)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                onClick={() => setCurrentPage(i + 1)}
+                                className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${currentPage === i + 1 ? 'bg-black text-white' : 'hover:bg-slate-100 hover:text-black'}`}
+                            >
+                                {i + 1}
+                            </button>
+                        )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
+                    </div>
                     <button
                         disabled={currentPage === totalPages || totalPages === 0}
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className="hover:text-black cursor-pointer disabled:opacity-20"
+                        className="hover:text-black cursor-pointer disabled:opacity-20 flex items-center gap-2"
                     >
                         Next Matrix
                     </button>
@@ -348,14 +487,14 @@ export default function VendorsPage() {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+                            className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden"
                         >
-                            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h2 className="text-xl font-black uppercase tracking-tight italic">Blueprint: Architect New Entity</h2>
                                 <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
                             </div>
 
-                            <form onSubmit={handleAddVendor} className="p-8 space-y-6">
+                            <form onSubmit={handleAddVendor} className="p-6 space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Username (Key)</label>
@@ -366,7 +505,7 @@ export default function VendorsPage() {
                                                 required
                                                 value={newVendor.username}
                                                 onChange={e => setNewVendor({ ...newVendor, username: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-10 pr-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-10 pr-4 font-bold text-sm outline-none focus:border-black transition-all"
                                                 placeholder="vendor_id"
                                             />
                                         </div>
@@ -380,7 +519,7 @@ export default function VendorsPage() {
                                                 required
                                                 value={newVendor.password}
                                                 onChange={e => setNewVendor({ ...newVendor, password: e.target.value })}
-                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-10 pr-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-10 pr-4 font-bold text-sm outline-none focus:border-black transition-all"
                                             />
                                         </div>
                                     </div>
@@ -393,7 +532,7 @@ export default function VendorsPage() {
                                         required
                                         value={newVendor.full_name}
                                         onChange={e => setNewVendor({ ...newVendor, full_name: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                         placeholder="John Doe"
                                     />
                                 </div>
@@ -406,7 +545,7 @@ export default function VendorsPage() {
                                             required
                                             value={newVendor.email}
                                             onChange={e => setNewVendor({ ...newVendor, email: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                             placeholder="john@example.com"
                                         />
                                     </div>
@@ -416,7 +555,7 @@ export default function VendorsPage() {
                                             type="text"
                                             value={newVendor.mobile}
                                             onChange={e => setNewVendor({ ...newVendor, mobile: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                             placeholder="+91 ..."
                                         />
                                     </div>
@@ -429,7 +568,7 @@ export default function VendorsPage() {
                                             type="text"
                                             value={newVendor.business_name}
                                             onChange={e => setNewVendor({ ...newVendor, business_name: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                             placeholder="Business Name"
                                         />
                                     </div>
@@ -439,7 +578,7 @@ export default function VendorsPage() {
                                             type="text"
                                             value={newVendor.city}
                                             onChange={e => setNewVendor({ ...newVendor, city: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all"
                                             placeholder="City"
                                         />
                                     </div>
@@ -451,7 +590,7 @@ export default function VendorsPage() {
                                         <select
                                             value={newVendor.plan_id}
                                             onChange={e => setNewVendor({ ...newVendor, plan_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all appearance-none cursor-pointer"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all appearance-none cursor-pointer"
                                         >
                                             <option value="">Select Tier (Optional)</option>
                                             {allPlans.map(p => (
@@ -464,7 +603,7 @@ export default function VendorsPage() {
                                         <select
                                             value={newVendor.billing_cycle}
                                             onChange={e => setNewVendor({ ...newVendor, billing_cycle: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all appearance-none cursor-pointer"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-sm outline-none focus:border-black transition-all appearance-none cursor-pointer"
                                         >
                                             <option value="monthly">Monthly Cycle</option>
                                             <option value="yearly">Yearly Protocol</option>
@@ -476,14 +615,14 @@ export default function VendorsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setIsAddModalOpen(false)}
-                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all"
+                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all"
                                     >
                                         Abort
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isSaving}
-                                        className="flex-2 px-10 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        className="flex-2 px-10 py-4 bg-black text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:shadow-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <Save size={16} /> {isSaving ? 'Synchronizing...' : 'Finalize Architect'}
                                     </button>

@@ -1,33 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import {
-  Sparkles,
-  Calculator,
-  Zap,
-  Globe,
-  CheckCircle2,
   ArrowRight,
   LayoutDashboard,
-  PieChart,
-  Briefcase,
-  Menu,
-  X,
-  Star,
   Shield,
-  Smartphone,
-  Car,
-  Users
+  Zap,
+  Globe,
+  Calculator
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export default function Home() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [billingCycle, setBillingCycle] = useState('monthly');
 
   useEffect(() => {
     setMounted(true);
@@ -35,159 +23,106 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  const pricing = [
-    {
-      name: "Starter Pack",
-      monthly: 999,
-      yearly: 9999,
-      description: "Essential tools for growing numerologists",
-      features: [
-        "Name Numerology Analysis",
-        "Mobile Number Compatibility",
-        "Up to 100 Client Records",
-        "Basic PDF Reports",
-        "Email Support"
-      ],
-      border: "border-astro-gold/20"
-    },
-    {
-      name: "Professional Pack",
-      monthly: 1999,
-      yearly: 19999,
-      description: "Advanced solutions for pro consultants",
-      popular: true,
-      features: [
-        "Everything in Starter",
-        "Business Numerology",
-        "Vehicle Number Analysis",
-        "AI-Powered Name Suggestions",
-        "Unlimited Client Records",
-        "Premium PDF Reports",
-        "Priority Support (24/7)"
-      ],
-      border: "border-astro-red/20"
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] selection:bg-[#6366F1] selection:text-white font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] selection:bg-[#D4940A] selection:text-white font-sans">
       <Header />
 
       {/* --- Hero Section --- */}
-      <section className="relative pt-48 pb-24 px-6 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-[0.03]">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,#1E293B_0%,transparent_50%)]" />
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* Sacred geometry watermark */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] -z-10 opacity-[0.04]">
+          <div className="absolute inset-0 rounded-full border-[2px] border-[#D4940A]" />
+          <div className="absolute inset-8 rounded-full border-[1px] border-[#D4940A]" />
+          <div className="absolute inset-16 rounded-full border-[1px] border-[#D4940A]" />
+          <div className="absolute inset-24 rounded-full border-[1px] border-[#D4940A]" />
+          <div className="absolute top-1/2 left-0 right-0 h-px bg-[#D4940A]" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#D4940A]" />
+          <div className="absolute inset-0 rotate-45">
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-[#D4940A]" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#D4940A]" />
+          </div>
         </div>
 
-        <div className="max-w-6xl mx-auto text-center space-y-10">
+        <div className="max-w-6xl mx-auto text-center space-y-8">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-8">
-              <Shield size={12} className="text-[#D4AF37]" /> Enterprise-Grade Numerology Solutions
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-amber-700 text-[9px] font-bold uppercase tracking-wider mb-6">
+              <span className="text-base leading-none">🙏</span> Sacred Numerology Platform
             </div>
-            <h1 className="text-5xl md:text-8xl font-bold leading-[1.05] tracking-tight text-[#1E293B]">
-              Professional Insights for <span className="text-[#64748B]">Strategic Success</span>
+            <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight text-[#1E293B]">
+              Unlock the Divine Power <br className="hidden md:block" /><span className="text-gradient-gold">of Numbers</span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto font-normal mt-8 leading-relaxed">
-              Empower your practice with advanced analytical tools. Combining ancient wisdom with modern precision for professional consultants.
+            <p className="text-lg md:text-xl text-slate-500 max-w-3xl mx-auto font-medium mt-6 leading-relaxed">
+              Build your own Numerology brand without hiring a developer. Use our engine, show your logo.
             </p>
           </motion.div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-10">
-            <button
-              onClick={() => router.push('/admin/register')}
-              className="w-full sm:w-auto px-10 py-5 bg-[#1E293B] text-white rounded-xl font-bold text-base hover:bg-[#334155] shadow-2xl shadow-slate-900/20 transform transition-all hover:-translate-y-1"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <Link
+              href="/register"
+              className="w-full sm:w-auto px-8 py-4 btn-saffron rounded-xl text-sm text-center cursor-pointer"
             >
-              Start Free Trial
-            </button>
-            <button className="w-full sm:w-auto px-10 py-5 bg-white border border-slate-200 text-slate-900 rounded-xl font-bold text-base hover:bg-slate-50 transition-all">
-              Request Demo
-            </button>
+              Begin Your Sacred Journey 🙏
+            </Link>
+            <Link
+              href="/features"
+              className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              Explore Features <ArrowRight size={16} />
+            </Link>
           </div>
 
-          {/* Preview Area */}
-          <div className="mt-24 relative max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-[#1E293B] opacity-[0.02] blur-[100px] rounded-full -z-10" />
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 p-4 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] relative">
-              <div className="bg-slate-50 rounded-[1.50rem] aspect-[16/9] flex flex-col items-center justify-center gap-6 text-slate-200 border border-slate-100/50">
-                <LayoutDashboard size={80} strokeWidth={0.5} />
-                <span className="text-xs font-semibold uppercase tracking-[0.5em] text-slate-400">Advanced Consultant Dashboard</span>
+          {/* Preview Area with devotional framing */}
+          <div className="mt-20 relative max-w-5xl mx-auto">
+            <div className="absolute inset-0 bg-[#D4940A] opacity-[0.03] blur-[80px] rounded-full -z-10" />
+            <div className="bg-white rounded-xl border border-slate-200 p-2 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#D4940A] via-[#F09819] to-[#D4940A]" />
+              <div className="bg-gradient-to-br from-amber-50/50 to-slate-50 rounded-lg aspect-[16/9] flex flex-col items-center justify-center gap-4 text-[#D4940A]/40 border border-amber-100/40">
+                <div className="text-6xl select-none opacity-30">ॐ</div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400">Sacred Consultant Dashboard</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- Features Grid --- */}
-      <section id="features" className="py-32 px-6 bg-white border-y border-slate-100">
-        <div className="max-w-7xl mx-auto space-y-20">
-          <div className="max-w-3xl">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4AF37]">Solution Ecosystem</span>
-            <h2 className="text-4xl md:text-5xl font-bold mt-4 tracking-tight text-[#1E293B]">Integrated Analytical Suites</h2>
-            <p className="text-lg text-slate-500 mt-6">A comprehensive toolkit designed to scale your professional practice with accuracy and efficiency.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { icon: <Calculator size={24} />, name: "Advanced Analysis", desc: "Proprietary algorithms for comprehensive personal and professional decoding." },
-              { icon: <Briefcase size={24} />, name: "Business Strategy", desc: "Strategic alignment for brands and corporations seeking numerical harmony." },
-              { icon: <Smartphone size={24} />, name: "Digital Footprint", desc: "Optimize digital connectivity and mobile vibrations for professional impact." },
-              { icon: <Car size={24} />, name: "Asset Suitability", desc: "Ensure operational assets are perfectly aligned with corporate objectives." },
-              { icon: <Zap size={24} />, name: "Precise Engine", desc: "Instant high-fidelity results powered by our core vibrational logic." },
-              { icon: <Users size={24} />, name: "Practice Management", desc: "Secure enterprise-grade CRM to manage extensive client portfolios." }
-            ].map((feat) => (
-              <div key={feat.name} className="p-8 rounded-[2rem] bg-slate-50/50 border border-slate-100 hover:border-[#D4AF37]/30 hover:bg-white transition-all group hover:shadow-2xl hover:shadow-slate-200/50">
-                <div className="p-4 rounded-2xl bg-white border border-slate-100 text-[#1E293B] w-fit mb-6 shadow-sm group-hover:scale-110 group-hover:bg-[#1E293B] group-hover:text-white transition-all">
-                  {feat.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3 tracking-tight text-[#1E293B]">{feat.name}</h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">{feat.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* --- Value Proposition --- */}
+      <section className="py-20 px-6 bg-white border-y border-slate-100">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+          {[
+            { icon: <Calculator size={24} />, title: "Vedic Precision", desc: "Rigorous algorithms rooted in ancient Vedic mathematics for absolute accuracy.", href: "/features" },
+            { icon: <Zap size={24} />, title: "Divine Speed", desc: "Lightning-fast sacred computations for real-time life-guidance decisions.", href: "/features" },
+            { icon: <Globe size={24} />, title: "Global Traditions", desc: "Unified support for Chaldean, Pythagorean, and Lo Shu Grid analysis.", href: "/features" }
+          ].map((item) => (
+            <Link key={item.title} href={item.href} className="space-y-4 group cursor-pointer">
+              <div className="text-[#1E293B] group-hover:text-[#D4940A] transition-colors">{item.icon}</div>
+              <h3 className="text-lg font-bold tracking-tight group-hover:text-[#D4940A] transition-colors">{item.title}</h3>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* --- Pricing --- */}
-      <section id="pricing" className="py-32 px-6 bg-slate-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 space-y-6">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-[#1E293B]">Enterprise Pricing</h2>
-            <p className="text-lg text-slate-500">Transparent solutions for independent consultants and agencies.</p>
-            <div className="inline-flex p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm mt-8">
-              <button onClick={() => setBillingCycle('monthly')} className={`px-8 py-3 rounded-xl text-xs font-bold transition-all ${billingCycle === 'monthly' ? 'bg-[#1E293B] text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}>Monthly</button>
-              <button onClick={() => setBillingCycle('yearly')} className={`px-8 py-3 rounded-xl text-xs font-bold transition-all ${billingCycle === 'yearly' ? 'bg-[#1E293B] text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}>Yearly (Save 20%)</button>
+      {/* --- Trust Signals --- */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto text-center space-y-12">
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Trusted by Professional Practitioners Worldwide</span>
+          <div className="flex flex-wrap items-center justify-center gap-12 md:gap-20 opacity-50">
+            <div className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-600">
+              <span className="text-[#D4940A]">🕉</span> VedicSoft
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
-            {pricing.map((plan) => (
-              <div key={plan.name} className={`bg-white p-10 rounded-[3rem] border ${plan.popular ? 'border-[#D4AF37] shadow-[0_32px_64px_-16px_rgba(212,175,55,0.15)] relative scale-105 z-10' : 'border-slate-200 shadow-xl'} flex flex-col`}>
-                {plan.popular && <span className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-[#D4AF37] text-[#1E293B] text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">Professional Choice</span>}
-                <div className="mb-10">
-                  <h3 className="text-2xl font-bold tracking-tight text-[#1E293B]">{plan.name}</h3>
-                  <p className="text-sm text-slate-500 mt-2">{plan.description}</p>
-                </div>
-                <div className="mb-10 flex items-baseline gap-2">
-                  <span className="text-6xl font-bold tracking-tighter text-[#1E293B]">₹{billingCycle === 'monthly' ? plan.monthly : plan.yearly}</span>
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
-                </div>
-                <div className="space-y-4 mb-10 flex-1">
-                  {plan.features.map(f => (
-                    <div key={f} className="flex items-center gap-4 text-sm font-medium text-slate-600">
-                      <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center">
-                        <CheckCircle2 size={14} className="text-[#D4AF37]" />
-                      </div>
-                      {f}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => router.push('/admin/register')} className={`w-full py-5 rounded-2xl font-bold text-sm transition-all transform active:scale-95 ${plan.popular ? 'bg-[#1E293B] text-white shadow-xl hover:bg-[#334155]' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}>Select Plan</button>
-              </div>
-            ))}
+            <div className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-600">
+              <span className="text-[#D4940A]">✨</span> JyotishPro
+            </div>
+            <div className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-600">
+              <span className="text-[#D4940A]">🔱</span> ShubhAnk
+            </div>
+            <div className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-600">
+              <span className="text-[#D4940A]">🪷</span> DivinePath
+            </div>
           </div>
         </div>
       </section>
@@ -196,4 +131,3 @@ export default function Home() {
     </div>
   );
 }
-
