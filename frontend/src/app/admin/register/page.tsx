@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
@@ -16,8 +14,9 @@ import {
     ArrowRight,
     ShieldCheck
 } from "lucide-react";
+import { API_BASE_URL, ROUTES } from "@/lib/constants";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const BASE_URL = API_BASE_URL;
 
 interface Plan {
     id: number;
@@ -29,7 +28,7 @@ interface Plan {
 }
 
 export default function RegisterPage() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
@@ -84,7 +83,7 @@ export default function RegisterPage() {
             const data = await response.json();
 
             if (response.ok) {
-                router.push("/admin/login?registered=true");
+                navigate(`${ROUTES.ADMIN.LOGIN}?registered=true`);
             } else {
                 setError(data.message || "Registration failed.");
             }
@@ -105,7 +104,7 @@ export default function RegisterPage() {
                 <div className="text-center mb-10">
                     <div
                         className="p-3 bg-gradient-to-r from-[#10B981] via-[#E61111] to-[#E61111] rounded-2xl inline-block mb-4 shadow-lg cursor-pointer"
-                        onClick={() => router.push('/')}
+                        onClick={() => navigate(ROUTES.HOME)}
                     >
                         <Sparkles className="text-white w-6 h-6" />
                     </div>
@@ -341,7 +340,7 @@ export default function RegisterPage() {
 
                 {/* Footer Link */}
                 <div className="mt-8 text-center text-black/20 font-black uppercase tracking-widest text-[9px]">
-                    Already established? <span onClick={() => router.push('/admin/login')} className="text-[#10B981] cursor-pointer hover:underline ml-1 uppercase">Enter Hub</span>
+                    Already established? <span onClick={() => navigate(ROUTES.ADMIN.LOGIN)} className="text-[#10B981] cursor-pointer hover:underline ml-1 uppercase">Enter Hub</span>
                 </div>
             </div>
         </main>

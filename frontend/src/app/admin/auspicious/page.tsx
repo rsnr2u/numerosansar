@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Star, PenTool, Plus, Trash2, Save, Download, Search, FileText, X, Sparkles, Shield, Radiation, Zap } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -25,7 +23,7 @@ export default function AuspiciousNumbersPage() {
     const [selected, setSelected] = useState<Partial<AuspiciousNumber>>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
-    const router = useRouter();
+    const navigate = useNavigate();
 
     useEffect(() => {
         setUserRole(localStorage.getItem('user_role'));

@@ -11,8 +11,8 @@ $routes->options('(:any)', function () {
 });
 
 $routes->group('api', function ($routes) {
-    $routes->post('calculate', 'NumerologyController::calculate');
-    $routes->get('meanings/(:num)', 'NumerologyController::meanings/$1');
+    $routes->post('calculate', 'AstrologyController::calculate');
+    $routes->get('meanings/(:num)', 'AstrologyController::meanings/$1');
     $routes->post('login', 'AuthController::login');
     $routes->post('register', 'AuthController::register');
     $routes->get('plans', 'SubscriptionController::getPlans');
@@ -50,6 +50,7 @@ $routes->group('api', function ($routes) {
         $routes->get('vendors', 'Admin\UserController::getVendors');
         $routes->get('vendors/(:num)', 'Admin\UserController::show/$1');
         $routes->post('vendors', 'Admin\UserController::create');
+        $routes->post('vendors/bulk-status', 'Admin\UserController::bulkUpdateStatus');
         $routes->post('vendors/(:num)/status', 'Admin\UserController::updateStatus/$1');
         $routes->post('vendors/(:num)/subscription', 'Admin\UserController::updateSubscription/$1');
         $routes->resource('users', ['controller' => 'Admin\UserController']);
@@ -60,28 +61,46 @@ $routes->group('api', function ($routes) {
         $routes->get('payments/trends', 'Admin\PaymentsController::getTrendData');
         $routes->get('system-config', 'Admin\SystemConfigController::index');
         $routes->post('system-config', 'Admin\SystemConfigController::update');
-        $routes->get('audit-logs', 'Admin\AuditLogController::index');
         $routes->get('registration-stats', 'Admin\UserController::getRegistrationStats');
+        $routes->get('transactions', 'Admin\TransactionController::index');
+        $routes->get('transactions/stats', 'Admin\TransactionController::getStats');
+        $routes->get('transactions/(:num)', 'Admin\TransactionController::show/$1');
+        $routes->get('analyses/stats', 'Admin\AnalysisController::stats');
+        $routes->get('analyses', 'Admin\AnalysisController::index');
+        $routes->get('analyses/(:num)', 'Admin\AnalysisController::show/$1');
 
         // Planet Relations
         $routes->get('planet-relations', 'AdminPlanetRelationController::index');
 
-        // Business Numerology
-        $routes->post('business-numerology/check', 'BusinessNumerologyController::check');
-        $routes->post('numerology/confirm', 'ClientController::confirmSelection');
+        // Credits
+        $routes->get('credits/balance', 'CreditController::balance');
+        $routes->post('credits/purchase', 'CreditController::purchase');
+        $routes->get('credits/history', 'CreditController::history');
+        // Super Admin Credits
+        $routes->get('credits/all-history', 'CreditController::allHistory');
+        $routes->get('credits/vendor-balances', 'CreditController::vendorBalances');
+        $routes->post('credits/adjust-balance', 'CreditController::adjustBalance');
+        $routes->get('credits/platform-stats', 'CreditController::getPlatformStats');
 
-        // Mobile Numerology
-        $routes->post('mobile-numerology/check', 'MobileNumerologyController::check');
-        $routes->delete('mobile-numerology/(:num)', 'MobileNumerologyController::delete/$1');
-        $routes->put('mobile-numerology/(:num)', 'MobileNumerologyController::update/$1');
+        // Business Astrology
+        $routes->post('business-astrology/check', 'BusinessAstrologyController::check');
+        $routes->post('astrology/confirm', 'ClientController::confirmSelection');
 
-        // Vehicle Numerology
-        $routes->post('vehicle-numerology/check', 'VehicleNumerologyController::check');
+        // Mobile Astrology
+        $routes->post('mobile-astrology/check', 'MobileAstrologyController::check');
+        $routes->delete('mobile-astrology/(:num)', 'MobileAstrologyController::delete/$1');
+        $routes->put('mobile-astrology/(:num)', 'MobileAstrologyController::update/$1');
+
+        // Vehicle Astrology
+        $routes->post('vehicle-astrology/check', 'VehicleAstrologyController::check');
 
         // AI Suggestions
         $routes->get('ai/settings', 'AIController::getSettings');
         $routes->post('ai/settings', 'AIController::updateSettings');
         $routes->post('ai/suggest', 'AIController::suggest');
+        $routes->post('ai/analyze-loshu', 'AIController::analyzeLoShu');
+        $routes->post('ai/yearly-prediction', 'AIController::yearlyPrediction');
+        $routes->post('ai/yoga-report', 'AIController::yogaReport');
 
         // Planet Relations (Compatibility Matrix)
         $routes->get('planet-relations', 'PlanetRelationController::index');

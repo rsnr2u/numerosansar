@@ -58,6 +58,7 @@ class NumerologySeeder extends Seeder
                 'letter' => $letter,
                 'pythagorean_number' => $p_val,
                 'chaldean_number' => $c_val,
+                'numerology_number' => $c_val, // Placeholder: using Chaldean for now
             ];
         }
 

@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
@@ -11,7 +9,7 @@ export default function SuperAdminLoginPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const router = useRouter();
+    const navigate = useNavigate();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,7 +30,7 @@ export default function SuperAdminLoginPage() {
                 localStorage.setItem("admin_token", data.token);
                 localStorage.setItem("user_role", data.user.role);
                 localStorage.setItem("username", data.user.username);
-                router.push("/super-admin/dashboard");
+                navigate("/super-admin/dashboard");
             } else {
                 const errorMsg = data.message || data.error || data._error || JSON.stringify(data);
                 setError(errorMsg === "{}" ? "Authentication failed. Check credentials." : errorMsg);
@@ -64,7 +62,7 @@ export default function SuperAdminLoginPage() {
                         <div className="inline-flex p-4 bg-[#1E293B] rounded-3xl mb-6 shadow-xl">
                             <ShieldCheck size={32} className="text-[#D4AF37]" />
                         </div>
-                        <h1 className="text-3xl font-black uppercase italic tracking-tighter text-[#1E293B]">Master<span className="text-[#D4AF37]">OS</span></h1>
+                        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#1E293B]">Master<span className="text-[#D4AF37]">OS</span></h1>
                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-2">Platform Administration Entry</p>
                     </div>
 

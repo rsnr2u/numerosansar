@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Search,
     Star,
@@ -15,10 +13,12 @@ import {
     ArrowLeft,
     History,
     Users,
-    Download
+    Download,
+    CreditCard
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { API_BASE_URL, ROUTES } from "@/lib/constants";
 
 // --- Types ---
 interface Planet {
@@ -38,6 +38,7 @@ interface LetterMap {
     letter: string;
     chaldean_number: number;
     pythagorean_number: number;
+    numerology_number: number;
 }
 interface Client {
     id: number;
@@ -49,11 +50,12 @@ interface CharBreakdown {
     char: string;
     chaldean: number;
     pythagorean: number;
+    numerology: number;
 }
 const DANGEROUS_NUMBERS = [10, 12, 13, 16, 18];
 
 interface SystemResult {
-    system: "Chaldean" | "Pythagorean";
+    system: "Chaldean" | "Pythagorean" | "Numerology";
     compound: number;
     single: number;
     planet?: string;
@@ -72,7 +74,7 @@ interface PlanetRelation {
     neutral_numbers: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const BASE_URL = API_BASE_URL;
 
 const reduceNumber = (num: number): number => {
     while (num > 9) {
@@ -136,11 +138,12 @@ const getBadgeColor = (result: string | undefined) => {
 // --- Components ---
 const SystemCard = ({ result }: { result: SystemResult }) => {
     const isChaldean = result.system === "Chaldean";
+    const isPythagorean = result.system === "Pythagorean";
     const bgClass = isChaldean
         ? "bg-[#EEF2FF] border-[#E0E7FF] dark:bg-blue-900/20 dark:border-blue-800"
         : "bg-[#FFFBEB] border-[#FEF3C7] dark:bg-amber-900/20 dark:border-amber-800";
 
-    const baseColorClass = isChaldean ? "text-astro-gold" : "text-astro-red";
+    const baseColorClass = isChaldean ? "text-astro-gold" : (isPythagorean ? "text-astro-red" : "text-[#6366f1]");
     const statusBorder = getResultColor(result.resultType);
 
     return (
@@ -240,6 +243,7 @@ export default function AdminCheck() {
     const [breakdown, setBreakdown] = useState<CharBreakdown[]>([]);
     const [chaldeanRes, setChaldeanRes] = useState<SystemResult | null>(null);
     const [pythagoreanRes, setPythagoreanRes] = useState<SystemResult | null>(null);
+    const [numerologyRes, setNumerologyRes] = useState<SystemResult | null>(null);
     const [luckyNumbers, setLuckyNumbers] = useState<number[]>([]);
 
     // Search
@@ -252,17 +256,18 @@ export default function AdminCheck() {
     const [isSaving, setIsSaving] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [showListing, setShowListing] = useState(false); // New State for toggling list vs form
-
     const [isUpdatingClient, setIsUpdatingClient] = useState(false);
+    const [availableCredits, setAvailableCredits] = useState<number>(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const router = useRouter();
-    const searchParams = useSearchParams();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     // --- Init ---
     useEffect(() => {
         const init = async () => {
             const token = localStorage.getItem("admin_token");
-            if (!token) return router.push("/admin/login");
+            if (!token) return navigate(ROUTES.ADMIN.LOGIN);
 
             try {
                 const responses = await Promise.all([
@@ -277,7 +282,7 @@ export default function AdminCheck() {
                 if (unauthorized) {
                     console.error("Session expired or invalid token.");
                     localStorage.removeItem("admin_token");
-                    router.push("/admin/login");
+                    navigate(ROUTES.ADMIN.LOGIN);
                     return;
                 }
 
@@ -312,6 +317,7 @@ export default function AdminCheck() {
             fetchClient(clientId);
             fetchHistory(clientId);
         }
+        fetchAvailableCredits();
     }, [searchParams]); // Re-run if client_id changes
 
     useEffect(() => {
@@ -356,28 +362,38 @@ export default function AdminCheck() {
                 const data = await res.json();
                 const names = data.filter((h: any) => h.type === 'Name');
                 setNameHistory(names);
-
-                // If we have history and no specific name/ID in URL, show listing
-                const hasUrlName = searchParams.get('name');
-                const hasUrlId = searchParams.get('check_id');
-                if (names.length > 0 && !hasUrlName && !hasUrlId) {
-                    setShowListing(true);
-                }
             }
         } catch (e) {
             console.error("Failed to fetch history", e);
         }
     };
 
+    const fetchAvailableCredits = async () => {
+        try {
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`${BASE_URL}/admin/dashboard/stats`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableCredits(data.credits_remaining);
+            }
+        } catch (e) {
+            console.error("Failed to fetch credits", e);
+        }
+    };
+
     // Lookup Maps (Memoized for perf)
-    const { chMap, pyMap } = useMemo(() => {
+    const { chMap, pyMap, nuMap } = useMemo(() => {
         const c: Record<string, number> = {};
         const p: Record<string, number> = {};
+        const n: Record<string, number> = {};
         lettersMap.forEach(l => {
             c[l.letter] = Number(l.chaldean_number);
             p[l.letter] = Number(l.pythagorean_number);
+            n[l.letter] = Number(l.numerology_number || 0);
         });
-        return { chMap: c, pyMap: p };
+        return { chMap: c, pyMap: p, nuMap: n };
     }, [lettersMap]);
 
     // --- Core Logic: Real-time Calc ---
@@ -390,29 +406,35 @@ export default function AdminCheck() {
             setBreakdown([]);
             setChaldeanRes(null);
             setPythagoreanRes(null);
+            setNumerologyRes(null);
             return;
         }
 
         const chars = cleanForCalc.split('');
         const newBreakdown: CharBreakdown[] = [];
-        let chTotal = 0, pyTotal = 0;
+        let chTotal = 0, pyTotal = 0, nuTotal = 0;
         let chSoul = 0, chPers = 0;
         let pySoul = 0, pyPers = 0;
+        let nuSoul = 0, nuPers = 0;
 
         chars.forEach(char => {
             const cv = chMap[char] || 0;
             const pv = pyMap[char] || 0;
-            newBreakdown.push({ char, chaldean: cv, pythagorean: pv });
+            const nv = nuMap[char] || 0;
+            newBreakdown.push({ char, chaldean: cv, pythagorean: pv, numerology: nv });
 
             chTotal += cv;
             pyTotal += pv;
+            nuTotal += nv;
 
             if (isVowel(char)) {
                 chSoul += cv;
                 pySoul += pv;
+                nuSoul += nv;
             } else {
                 chPers += cv;
                 pyPers += pv;
+                nuPers += nv;
             }
         });
 
@@ -453,7 +475,22 @@ export default function AdminCheck() {
             personality: { compound: pyPers, isDangerous: isDangerous(pyPers) }
         });
 
-    }, [callingName, loadingData, chMap, pyMap, compounds, planets, dob, planetRelations]);
+        // Numerology
+        const nuSingle = reduceNumber(nuTotal);
+        const nuM = getMeaning(nuTotal);
+        setNumerologyRes({
+            system: "Numerology",
+            compound: nuTotal,
+            single: nuSingle,
+            planet: getPlanet(nuSingle),
+            meaning: nuM?.title,
+            description: nuM?.description,
+            resultType: nuM?.result || 'Analyzed',
+            soulUrge: { compound: nuSoul, isDangerous: isDangerous(nuSoul) },
+            personality: { compound: nuPers, isDangerous: isDangerous(nuPers) }
+        });
+
+    }, [callingName, loadingData, chMap, pyMap, nuMap, compounds, planets, dob, planetRelations]);
 
     // Lucky Numbers Logic
     useEffect(() => {
@@ -517,6 +554,11 @@ export default function AdminCheck() {
     const [checkId, setCheckId] = useState<number | null>(null);
     const [confirmed, setConfirmed] = useState(false);
     // Unified Save Logic
+    const handleSaveRequest = () => {
+        if (!callingName || !dob) return;
+        setShowConfirmModal(true);
+    };
+
     const saveToBackend = async () => {
         if (!callingName || !dob) return;
 
@@ -526,7 +568,7 @@ export default function AdminCheck() {
 
         try {
             // 1. Save Analysis Record
-            const res = await fetch("http://localhost:8080/api/admin/calculate", {
+            const res = await fetch(`${BASE_URL}/admin/calculate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -566,7 +608,7 @@ export default function AdminCheck() {
                 setIsUpdatingClient(false);
 
                 // Confirm Analysis
-                await fetch("http://localhost:8080/api/admin/numerology/confirm", {
+                await fetch(`${BASE_URL}/admin/astrology/confirm`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -581,6 +623,8 @@ export default function AdminCheck() {
             console.error("Submit failed", e);
         } finally {
             setIsSaving(false);
+            setShowConfirmModal(false);
+            fetchAvailableCredits(); // Update balance
         }
     };
 
@@ -606,7 +650,7 @@ export default function AdminCheck() {
         params.delete('name');
         params.delete('dob');
         if (!keepClient) params.delete('client_id');
-        router.replace(`?${params.toString()}`);
+        navigate(`?${params.toString()}`);
     };
 
     const downloadPDF = () => {
@@ -616,7 +660,7 @@ export default function AdminCheck() {
         // --- Header ---
         doc.setFontSize(22);
         doc.setFont("helvetica", "bold");
-        doc.text("Name Numerology Report", pageWidth / 2, 20, { align: "center" });
+        doc.text("Name Astrology Report", pageWidth / 2, 20, { align: "center" });
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -669,7 +713,8 @@ export default function AdminCheck() {
         const tableHead = [["System", ...breakdown.map(b => b.char)]];
         const tableBody = [
             ["Chaldean", ...breakdown.map(b => b.chaldean)],
-            ["Pythagorean", ...breakdown.map(b => b.pythagorean)]
+            ["Pythagorean", ...breakdown.map(b => b.pythagorean)],
+            ["Numerology", ...breakdown.map(b => b.numerology)]
         ];
 
         autoTable(doc, {
@@ -732,8 +777,9 @@ export default function AdminCheck() {
             doc.text(lines, x + 40, y + 60, { align: "center" });
         };
 
-        if (chaldeanRes) drawSystemResult("Chaldean System", chaldeanRes, 15, yPos);
-        if (pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, 110, yPos);
+        if (chaldeanRes) drawSystemResult("Chaldean System", chaldeanRes, 10, yPos);
+        if (pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, 75, yPos);
+        if (numerologyRes) drawSystemResult("Numerology System", numerologyRes, 140, yPos);
 
         yPos += 85;
 
@@ -753,7 +799,7 @@ export default function AdminCheck() {
         // --- Footer ---
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text("JC Astro Numerology Services", pageWidth / 2, 280, { align: "center" });
+        doc.text("JC Astro Astrology Services", pageWidth / 2, 280, { align: "center" });
 
         doc.save(`${selectedClient?.full_name}_Name_Analysis.pdf`);
     };
@@ -768,7 +814,7 @@ export default function AdminCheck() {
             <div className="container mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
-                        <button onClick={() => router.back()} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
+                        <button onClick={() => navigate(-1)} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
                             <ArrowLeft size={20} />
                         </button>
                         <div>
@@ -831,34 +877,35 @@ export default function AdminCheck() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
-                        <button onClick={() => {
-                            if (showListing || (nameHistory.length > 0 && !showListing)) {
-                                if (!showListing) setShowListing(true);
-                                else router.back();
-                            } else {
-                                router.back();
-                            }
-                        }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
+                        <button onClick={() => navigate(-1)} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                             <div>
-                                <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
-                                    <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                        <Sparkles size={24} />
-                                    </span>
-                                    {checkId ? 'Edit Analysis' : 'Name Numerology'}
-                                </h1>
+                                    <div className="flex items-center gap-4">
+                                        <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
+                                            <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                                <Sparkles size={24} />
+                                            </span>
+                                            {checkId ? 'Edit Analysis' : 'Name Astrology'}
+                                        </h1>
+                                        <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 flex items-center gap-2">
+                                            <CreditCard size={14} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Available: {availableCredits}</span>
+                                        </div>
+                                    </div>
                                 <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Analyze Name Vibrations</p>
                             </div>
 
                             {chaldeanRes && (
-                                <button
-                                    onClick={downloadPDF}
-                                    className="px-4 py-2 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-xs text-primary shadow-sm hover:shadow-md active:scale-95 md:ml-4"
-                                >
-                                    <Download size={16} /> Download PDF
-                                </button>
+                                <div className="flex items-center gap-2 md:ml-4">
+                                    <button
+                                        onClick={downloadPDF}
+                                        className="px-4 py-2 font-bold rounded-xl bg-card border border-border hover:border-primary/50 transition-all flex items-center gap-2 text-xs text-primary shadow-sm hover:shadow-md active:scale-95"
+                                    >
+                                        <Download size={16} /> Download PDF
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -921,7 +968,7 @@ export default function AdminCheck() {
                                         setShowDropdown(false);
                                         const params = new URLSearchParams(searchParams.toString());
                                         params.set('client_id', String(c.id));
-                                        router.replace(`?${params.toString()}`);
+                                        navigate(`?${params.toString()}`);
                                         fetchHistory(String(c.id));
                                     }} className="w-full text-left p-4 hover:bg-primary/5 flex justify-between items-center group transition-colors">
                                         <div className="flex flex-col">
@@ -996,7 +1043,7 @@ export default function AdminCheck() {
                         {callingName && (
                             <div className="flex items-center justify-end mt-4 pt-4 border-t border-border/50">
                                 <button
-                                    onClick={saveToBackend}
+                                    onClick={handleSaveRequest}
                                     disabled={isSaving}
                                     className={`px-6 py-2 font-black rounded-xl transition-all flex items-center gap-3 shadow-xl hover:shadow-2xl active:scale-95 min-w-[300px] justify-center text-lg ${isSaving ? "bg-muted text-muted-foreground cursor-wait" : "bg-astro-gradient text-white"}`}
                                 >
@@ -1060,10 +1107,11 @@ export default function AdminCheck() {
                             )}
 
                             {/* 1. Result Cards */}
-                            {chaldeanRes && pythagoreanRes && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {chaldeanRes && pythagoreanRes && numerologyRes && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                     <SystemCard result={chaldeanRes} />
                                     <SystemCard result={pythagoreanRes} />
+                                    <SystemCard result={numerologyRes} />
                                 </div>
                             )}
 
@@ -1133,7 +1181,7 @@ export default function AdminCheck() {
                                         </div>
 
                                         {/* Pythagorean Row */}
-                                        <div className="flex items-center py-4 group hover:bg-primary/5 transition-colors rounded-xl mt-2">
+                                        <div className="flex items-center py-4 border-b border-border/30 group hover:bg-primary/5 transition-colors rounded-xl mt-2">
                                             <div className="w-32 text-[10px] font-black text-primary uppercase px-4 tracking-widest flex items-center gap-2">
                                                 <div className="w-1 h-1 rounded-full bg-primary" />
                                                 Pythagorean
@@ -1141,6 +1189,19 @@ export default function AdminCheck() {
                                             <div className="flex gap-2">
                                                 {breakdown.map((b, i) => (
                                                     <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.pythagorean}</div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Numerology Row */}
+                                        <div className="flex items-center py-4 group hover:bg-indigo-500/5 transition-colors rounded-xl mt-2">
+                                            <div className="w-32 text-[10px] font-black text-indigo-500 uppercase px-4 tracking-widest flex items-center gap-2">
+                                                <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                                                Numerology
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {breakdown.map((b, i) => (
+                                                    <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.numerology}</div>
                                                 ))}
                                             </div>
                                         </div>
@@ -1171,6 +1232,18 @@ export default function AdminCheck() {
                                         </h3>
                                         <p className="text-foreground/80 leading-relaxed text-sm font-medium">
                                             {pythagoreanRes.description}
+                                        </p>
+                                    </div>
+                                )}
+                                {numerologyRes?.description && (
+                                    <div className="p-6 rounded-2xl border border-black/5 relative overflow-hidden bg-white shadow-lg group">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />
+                                        <h3 className="text-indigo-500 font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
+                                            <span className="p-1.5 bg-indigo-500/10 rounded-lg"><Sparkles size={14} /></span>
+                                            Numerology Essential Insights ({numerologyRes.compound})
+                                        </h3>
+                                        <p className="text-foreground/80 leading-relaxed text-sm font-medium">
+                                            {numerologyRes.description}
                                         </p>
                                     </div>
                                 )}
@@ -1234,6 +1307,24 @@ export default function AdminCheck() {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Numerology Key */}
+                            <div>
+                                <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                    Numerology System
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3 text-center">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                                        <div key={num} className="bg-input/20 rounded-xl p-3 border border-border hover:border-indigo-500/20 transition-all group">
+                                            <span className="text-xl font-black text-indigo-500 block mb-1 group-hover:scale-110 transition-transform">{num}</span>
+                                            <span className="text-[9px] text-muted-foreground font-black tracking-widest leading-none block">
+                                                {lettersMap.filter(l => Number(l.numerology_number) === num).map(l => l.letter).join(' ')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Visual Help */}
@@ -1287,8 +1378,8 @@ export default function AdminCheck() {
                         /* Maintain Grid for Results */
                         .grid-cols-2 {
                             display: grid !important;
-                            grid-template-columns: 1fr 1fr !important;
-                            gap: 1.5rem !important;
+                            grid-template-columns: 1fr 1fr 1fr !important;
+                            gap: 1rem !important;
                         }
                         
                         /* Typography & Colors */
@@ -1307,6 +1398,41 @@ export default function AdminCheck() {
                 `
             }} />
 
+            {/* Credit Confirmation Modal */}
+            <AnimatePresence>
+                {showConfirmModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center"
+                        >
+                            <div className="w-20 h-20 bg-purple-50 text-[#4B2E83] rounded-full flex items-center justify-center mx-auto">
+                                <CreditCard size={40} />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Confirm Consumption</h3>
+                                <p className="text-slate-500 text-sm font-medium">This analysis will consume <span className="text-[#4B2E83] font-bold">1 credit</span> from your balance.</p>
+                            </div>
+                            <div className="flex flex-col gap-2 pt-2">
+                                <button 
+                                    onClick={saveToBackend}
+                                    className="w-full py-4 bg-[#4B2E83] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg"
+                                >
+                                    Confirm & Continue
+                                </button>
+                                <button 
+                                    onClick={() => setShowConfirmModal(false)}
+                                    className="w-full py-4 bg-white text-slate-400 border border-slate-100 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </>
     );
 }

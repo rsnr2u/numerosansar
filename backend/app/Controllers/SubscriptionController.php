@@ -15,7 +15,7 @@ class SubscriptionController extends BaseController
         $plans = $model->findAll();
 
         foreach ($plans as &$plan) {
-            $plan['modules'] = json_decode($plan['modules']);
+            $plan['modules'] = [];
         }
 
         return $this->respond($plans);
@@ -30,9 +30,8 @@ class SubscriptionController extends BaseController
         $model = new SubscriptionPlanModel();
         $data = $this->request->getJSON(true);
 
-        if (isset($data['modules'])) {
-            $data['modules'] = json_encode($data['modules']);
-        }
+        // We preserve the field for DB compatibility but it's no longer used for logic
+        $data['modules'] = json_encode([]);
 
         $id = $data['id'] ?? null;
         if ($id) {

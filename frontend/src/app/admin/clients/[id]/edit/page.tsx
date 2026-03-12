@@ -1,14 +1,12 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useNavigate } from "react-router-dom";
 import { User, Phone, ArrowLeft, Save, X, Calendar, UserCheck, Mail, MapPin } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 
 export default function EditClientPage() {
     const params = useParams();
-    const router = useRouter();
+    const navigate = useNavigate();
     const [client, setClient] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -41,7 +39,7 @@ export default function EditClientPage() {
         try {
             const res = await api.put(`/admin/clients/${client.id}`, formData);
             if (res.ok) {
-                router.push(`/admin/clients/${client.id}`);
+                navigate(`/admin/clients/${client.id}`);
             } else {
                 const data = await res.json();
                 alert(data.message || "Failed to update profile");
@@ -61,7 +59,7 @@ export default function EditClientPage() {
         <div className="max-w-4xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Link href={`/admin/clients/${client.id}`}>
+                <Link to={`/admin/clients/${client.id}`}>
                     <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-foreground">
                         <ArrowLeft size={20} />
                     </button>
@@ -106,6 +104,20 @@ export default function EditClientPage() {
                         </div>
 
                         <div className="space-y-2">
+                            <label className="text-xs uppercase font-bold text-muted-foreground ml-1">Profession</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                                <input
+                                    type="text"
+                                    value={formData?.profession || ""}
+                                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                                    className="w-full bg-input/50 border border-border rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-accent transition-all text-foreground"
+                                    placeholder="e.g. Software Engineer"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
                             <label className="text-xs uppercase font-bold text-muted-foreground ml-1">Date of Birth</label>
                             <div className="relative">
                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
@@ -115,6 +127,19 @@ export default function EditClientPage() {
                                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                                     className="w-full bg-input/50 border border-border rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-accent transition-all text-foreground"
                                     required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase font-bold text-muted-foreground ml-1">Time of Birth</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                                <input
+                                    type="time"
+                                    value={formData?.time_of_birth || ""}
+                                    onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
+                                    className="w-full bg-input/50 border border-border rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-accent transition-all text-foreground"
                                 />
                             </div>
                         </div>
@@ -201,7 +226,7 @@ export default function EditClientPage() {
                     </div>
 
                     <div className="pt-8 border-t border-border flex justify-end gap-3">
-                        <Link href={`/admin/clients/${client.id}`}>
+                        <Link to={`/admin/clients/${client.id}`}>
                             <button
                                 type="button"
                                 className="px-8 py-2.5 rounded-xl text-muted-foreground font-bold hover:bg-muted transition-colors"

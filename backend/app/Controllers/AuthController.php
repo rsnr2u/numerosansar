@@ -19,15 +19,19 @@ class AuthController extends BaseController
     {
         $userModel = new UserModel();
 
-        $username = $this->request->getVar('username');
+        $loginIdentity = $this->request->getVar('username'); // This can be email or username
         $password = $this->request->getVar('password');
 
-        log_message('error', '[Login Debug] User: ' . ($username ?? 'NULL') . ' | Body: ' . $this->request->getBody());
+        log_message('error', '[Login Debug] Identity: ' . ($loginIdentity ?? 'NULL'));
 
-        $user = $userModel->where('username', $username)->first();
+        $user = $userModel->groupStart()
+            ->where('username', $loginIdentity)
+            ->orWhere('email', $loginIdentity)
+            ->groupEnd()
+            ->first();
 
         if (is_null($user) || !password_verify($password, $user['password'])) {
-            return $this->fail('Invalid username or password', 401);
+            return $this->fail('Invalid credentials. Please check your username/email and password.', 401);
         }
 
         // Update Login Metadata
@@ -38,7 +42,7 @@ class AuthController extends BaseController
 
         $key = getenv('JWT_SECRET') ?: env('JWT_SECRET') ?: 'default_fallback_secret_change_me';
         $iat = time();
-        $exp = $iat + 86400; // 24 hours
+        $exp = $iat + 28800; // 8 hours
 
         $payload = [
             'iat' => $iat,

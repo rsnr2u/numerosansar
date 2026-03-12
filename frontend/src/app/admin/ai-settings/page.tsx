@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Save, Sparkles, Key, AlertCircle, Cpu, CheckCircle2, Circle } from "lucide-react";
 import { api } from "@/lib/api";

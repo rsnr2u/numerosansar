@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Grid, PenTool, Trash2, Plus, ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
@@ -10,12 +8,41 @@ interface LoShuMeaning {
     number: number;
     quality: string;
     remedy: string;
+    quality_telugu?: string;
+    quality_hindi?: string;
+    quality_bengali?: string;
+    quality_devanagari?: string;
+    quality_kannada?: string;
+    quality_tamil?: string;
+    quality_malayalam?: string;
+    quality_gujarati?: string;
+    remedy_telugu?: string;
+    remedy_hindi?: string;
+    remedy_bengali?: string;
+    remedy_devanagari?: string;
+    remedy_kannada?: string;
+    remedy_tamil?: string;
+    remedy_malayalam?: string;
+    remedy_gujarati?: string;
 }
 
 export default function LoShuMeaningsCMS() {
     const [meanings, setMeanings] = useState<LoShuMeaning[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedMeaning, setSelectedMeaning] = useState<Partial<LoShuMeaning>>({});
+    const [editLang, setEditLang] = useState<string>("en");
+
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'telugu', label: 'Telugu' },
+        { code: 'hindi', label: 'Hindi' },
+        { code: 'bengali', label: 'Bengali' },
+        { code: 'devanagari', label: 'Devanagari' },
+        { code: 'kannada', label: 'Kannada' },
+        { code: 'tamil', label: 'Tamil' },
+        { code: 'malayalam', label: 'Malayalam' },
+        { code: 'gujarati', label: 'Gujarati' }
+    ];
 
     useEffect(() => {
         fetchMeanings();
@@ -77,23 +104,46 @@ export default function LoShuMeaningsCMS() {
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] uppercase font-black text-slate-400 mb-1 block tracking-widest">Natural Strength / Quality</label>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Natural Strength / Quality</label>
+                                    <select
+                                        value={editLang}
+                                        onChange={(e) => setEditLang(e.target.value)}
+                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold outline-none"
+                                    >
+                                        {LANGUAGES.map(lang => (
+                                            <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <textarea
-                                    value={selectedMeaning.quality || ""}
-                                    onChange={e => setSelectedMeaning({ ...selectedMeaning, quality: e.target.value })}
+                                    value={editLang === 'en' ? (selectedMeaning.quality || "") : (selectedMeaning[`quality_${editLang}` as keyof LoShuMeaning] as string || "")}
+                                    onChange={(e) => {
+                                        if (editLang === 'en') {
+                                            setSelectedMeaning({ ...selectedMeaning, quality: e.target.value });
+                                        } else {
+                                            setSelectedMeaning({ ...selectedMeaning, [`quality_${editLang}`]: e.target.value });
+                                        }
+                                    }}
                                     className="w-full bg-slate-50 border p-3 rounded-xl"
                                     rows={3}
-                                    placeholder="What does this number represent?"
+                                    placeholder={`What does this number represent in ${LANGUAGES.find(l => l.code === editLang)?.label}?`}
                                 />
                             </div>
                             <div>
                                 <label className="text-[10px] uppercase font-black text-slate-400 mb-1 block tracking-widest">Growth Remedy (If Missing)</label>
                                 <textarea
-                                    value={selectedMeaning.remedy || ""}
-                                    onChange={e => setSelectedMeaning({ ...selectedMeaning, remedy: e.target.value })}
+                                    value={editLang === 'en' ? (selectedMeaning.remedy || "") : (selectedMeaning[`remedy_${editLang}` as keyof LoShuMeaning] as string || "")}
+                                    onChange={(e) => {
+                                        if (editLang === 'en') {
+                                            setSelectedMeaning({ ...selectedMeaning, remedy: e.target.value });
+                                        } else {
+                                            setSelectedMeaning({ ...selectedMeaning, [`remedy_${editLang}`]: e.target.value });
+                                        }
+                                    }}
                                     className="w-full bg-slate-50 border p-3 rounded-xl"
                                     rows={4}
-                                    placeholder="Suggested remedies if this number is missing..."
+                                    placeholder={`Suggested remedies if this number is missing in ${LANGUAGES.find(l => l.code === editLang)?.label}...`}
                                 />
                             </div>
                             <button onClick={handleSaveMeaning} className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:bg-black transition-colors">

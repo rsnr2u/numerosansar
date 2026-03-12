@@ -29,6 +29,11 @@ class CreateNumerologyTables extends Migration
                 'type' => 'TINYINT',
                 'constraint' => 2,
             ],
+            'numerology_number' => [
+                'type' => 'TINYINT',
+                'constraint' => 2,
+                'null' => true,
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->createTable('numerology_letters');

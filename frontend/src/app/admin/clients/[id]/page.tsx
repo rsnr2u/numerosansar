@@ -1,14 +1,12 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { User, Phone, Briefcase, Car, ArrowLeft, Star, Edit, MapPin, Mail, Smartphone, Save, X, Calendar, UserCheck, Grid } from "lucide-react";
-import Link from "next/link";
+import { useParams, useNavigate } from "react-router-dom";
+import { User, Phone, Briefcase, Car, ArrowLeft, Star, Edit, MapPin, Mail, Smartphone, Save, X, Calendar, UserCheck, Grid, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 
 export default function ClientDashboardPage() {
     const params = useParams();
-    const router = useRouter();
+    const navigate = useNavigate();
     const [client, setClient] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [history, setHistory] = useState<any[]>([]);
@@ -50,13 +48,15 @@ export default function ClientDashboardPage() {
     if (!client) return <div className="text-center py-20 text-red-400">Client not found</div>;
 
     const confirmedName = history.find(h => h.type === 'Name' && h.is_confirmed == 1)?.name_value;
-    const confirmedBiz = history.find(h => h.type === 'Business' && h.is_confirmed == 1)?.name_value;
+    const confirmedBizRecord = history.find(h => h.type === 'Business' && h.is_confirmed == 1);
+    const confirmedBiz = confirmedBizRecord?.name_value;
+    const confirmedBizId = confirmedBizRecord?.id;
     const confirmedMobile = history.find(h => h.type === 'Mobile' && h.is_confirmed == 1)?.name_value;
     const confirmedVehicle = history.find(h => h.type === 'Vehicle' && h.is_confirmed == 1)?.name_value;
 
     const services = [
         {
-            title: "Name Numerology",
+            title: "Name Astrology",
             desc: "Analyze full name and calling name compatibility.",
             icon: <User size={24} className="text-blue-500" />,
             path: `/admin/check?dob=${client.dob}&client_id=${client.id}`,
@@ -66,21 +66,21 @@ export default function ClientDashboardPage() {
             title: "Business Name",
             desc: "Check business name suitability for this client.",
             icon: <Briefcase size={24} className="text-accent" />,
-            path: `/admin/business-numerology?dob=${client.dob}&business_name=${encodeURIComponent(confirmedBiz || '')}&client_id=${client.id}`,
+            path: `/admin/business-astrology?dob=${client.dob}&business=${encodeURIComponent(confirmedBiz || '')}&client_id=${client.id}${confirmedBizId ? `&check_id=${confirmedBizId}` : ''}`,
             color: "bg-accent/10 border-accent/20 hover:border-accent/50"
         },
         {
-            title: "Mobile Numerology",
+            title: "Mobile Astrology",
             desc: "Analyze mobile number vibrations.",
             icon: <Smartphone size={24} className="text-green-500" />,
-            path: `/admin/mobile-numerology?number=${confirmedMobile || client.mobile_number}&client_id=${client.id}`,
+            path: `/admin/mobile-astrology?number=${confirmedMobile || client.mobile_number}&client_id=${client.id}`,
             color: "bg-green-500/10 border-green-500/20 hover:border-green-500/50"
         },
         {
-            title: "Vehicle Numerology",
+            title: "Vehicle Astrology",
             desc: "Check lucky vehicle numbers.",
             icon: <Car size={24} className="text-purple-500" />,
-            path: `/admin/vehicle-numerology?dob=${client.dob}&vehicle=${encodeURIComponent(confirmedVehicle || '')}&client_id=${client.id}`,
+            path: `/admin/vehicle-astrology?dob=${client.dob}&vehicle=${encodeURIComponent(confirmedVehicle || '')}&client_id=${client.id}`,
             color: "bg-purple-500/10 border-purple-500/20 hover:border-purple-500/50"
         },
         {
@@ -89,6 +89,20 @@ export default function ClientDashboardPage() {
             icon: <Grid size={24} className="text-slate-700" />,
             path: `/admin/clients/${client.id}/lo-shu-grid`,
             color: "bg-slate-700/5 border-slate-700/10 hover:border-slate-700/30"
+        },
+        {
+            title: "Yearly Prediction",
+            desc: "AI-powered numerology forecast for 2026.",
+            icon: <Sparkles size={24} className="text-amber-500" />,
+            path: `/admin/clients/${client.id}/yearly-prediction`,
+            color: "bg-amber-500/10 border-amber-500/20 hover:border-amber-500/50"
+        },
+        {
+            title: "Yoga Report",
+            desc: "AI-powered analysis of Lo Shu Grid Yogas.",
+            icon: <Sparkles size={24} className="text-pink-500" />,
+            path: `/admin/clients/${client.id}/yoga-report`,
+            color: "bg-pink-500/10 border-pink-500/20 hover:border-pink-500/50"
         }
     ];
 
@@ -97,7 +111,7 @@ export default function ClientDashboardPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/admin/clients">
+                    <Link to="/admin/clients">
                         <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-foreground">
                             <ArrowLeft size={20} />
                         </button>
@@ -111,6 +125,7 @@ export default function ClientDashboardPage() {
                                 {confirmedName || "Client"}
                             </span>
                             <span>• {new Date(client.dob).toLocaleDateString()}</span>
+                            {client.time_of_birth && <span>• {client.time_of_birth}</span>}
                         </p>
                     </div>
                 </div>
@@ -118,7 +133,7 @@ export default function ClientDashboardPage() {
                 <div className="flex gap-2">
                     {typeof window !== 'undefined' && localStorage.getItem('user_role') === 'super_admin' && (
                         <Link
-                            href={`/admin/clients/${client.id}/edit`}
+                            to={`/admin/clients/${client.id}/edit`}
                             className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-xl transition-all font-bold border border-primary/20"
                         >
                             <Edit size={18} /> Edit Profile
@@ -133,6 +148,14 @@ export default function ClientDashboardPage() {
                 <div className="bg-white p-6 rounded-3xl border border-black/5 space-y-4 shadow-xl relative overflow-hidden">
                     <h3 className="text-xs font-black text-black uppercase tracking-widest pl-1">Contact Details</h3>
                     <div className="space-y-3">
+                        {client.profession && (
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black shadow-sm">
+                                    <Briefcase size={16} />
+                                </div>
+                                <span className="text-[#2D2926] text-sm font-medium">{client.profession}</span>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-white border border-black/5 flex items-center justify-center text-black shadow-sm">
                                 <Phone size={16} />
@@ -181,7 +204,7 @@ export default function ClientDashboardPage() {
             {/* Services Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {services.map((service, idx) => (
-                    <Link href={service.path} key={idx} className={`bg-white p-6 rounded-3xl border border-black/5 shadow-lg transition-all group hover:shadow-2xl hover:-translate-y-1 ${service.color}`}>
+                    <Link to={service.path} key={idx} className={`bg-white p-6 rounded-3xl border border-black/5 shadow-lg transition-all group hover:shadow-2xl hover:-translate-y-1 ${service.color}`}>
                         <div className="mb-4">{service.icon}</div>
                         <h3 className="text-lg font-black text-[#2D2926] mb-2 tracking-tight">
                             {service.title}
@@ -232,7 +255,7 @@ function ClientHistorySection({ clientId, clientDob, initialHistory, onRefresh }
 
     return (
         <div className="space-y-6 pt-8 border-t border-border">
-            <h2 className="text-2xl font-bold">Numerology History</h2>
+            <h2 className="text-2xl font-bold">Astrology History</h2>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -347,10 +370,10 @@ function ClientHistorySection({ clientId, clientDob, initialHistory, onRefresh }
                                                     href={item.type === 'Name'
                                                         ? `/admin/check?name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
                                                         : item.type === 'Business'
-                                                            ? `/admin/business-numerology?business_name=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
+                                                            ? `/admin/business-astrology?business=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
                                                             : item.type === 'Mobile'
-                                                                ? `/admin/mobile-numerology/analysis?number=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&edit_id=${item.id}`
-                                                                : `/admin/vehicle-numerology?vehicle=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
+                                                                ? `/admin/mobile-astrology/analysis?number=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&edit_id=${item.id}`
+                                                                : `/admin/vehicle-astrology?vehicle=${encodeURIComponent(item.name_value)}&dob=${clientDob}&client_id=${clientId}&check_id=${item.id}`
                                                     }
                                                     target="_blank"
                                                     className="px-3 py-1 bg-muted hover:bg-muted/80 rounded text-[10px] font-bold uppercase tracking-wider text-foreground transition-colors"

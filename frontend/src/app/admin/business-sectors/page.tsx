@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import {
     Database,
@@ -17,7 +15,7 @@ import {
     Star
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 
 interface Sector {
@@ -28,16 +26,45 @@ interface Sector {
     chaldean_targets: string;
     pythagorean_targets: string;
     lucky_numbers: string;
+    sector_name_hindi?: string;
+    sector_name_bengali?: string;
+    sector_name_devanagari?: string;
+    sector_name_kannada?: string;
+    sector_name_tamil?: string;
+    sector_name_malayalam?: string;
+    sector_name_gujarati?: string;
+    primary_planet_telugu?: string;
+    primary_planet_hindi?: string;
+    primary_planet_bengali?: string;
+    primary_planet_devanagari?: string;
+    primary_planet_kannada?: string;
+    primary_planet_tamil?: string;
+    primary_planet_malayalam?: string;
+    primary_planet_gujarati?: string;
 }
 
 export default function BusinessSectorsPage() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [sectors, setSectors] = useState<Sector[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [editLang, setEditLang] = useState<string>("en");
+
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'telugu', label: 'Telugu' },
+        { code: 'hindi', label: 'Hindi' },
+        { code: 'bengali', label: 'Bengali' },
+        { code: 'devanagari', label: 'Devanagari' },
+        { code: 'kannada', label: 'Kannada' },
+        { code: 'tamil', label: 'Tamil' },
+        { code: 'malayalam', label: 'Malayalam' },
+        { code: 'gujarati', label: 'Gujarati' }
+    ];
+
     const [currentSector, setCurrentSector] = useState<Partial<Sector>>({
         sector_name: "",
         sector_name_telugu: "",
@@ -112,7 +139,7 @@ export default function BusinessSectorsPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="flex items-center gap-5">
                     <button
-                        onClick={() => router.back()}
+                        onClick={() => navigate(-1)}
                         className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-black/20 transition-all text-slate-400 hover:text-black shadow-sm"
                     >
                         <ArrowLeft size={20} />
@@ -272,43 +299,56 @@ export default function BusinessSectorsPage() {
                                         </div>
                                         <h2 className="text-3xl font-black tracking-tight">{currentSector.id ? 'Edit' : 'Add'} Sector</h2>
                                     </div>
-                                    <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
-                                        <CloseIcon size={24} className="text-slate-400" />
-                                    </button>
+                                    <div className="flex items-center gap-4">
+                                        <select
+                                            value={editLang}
+                                            onChange={(e) => setEditLang(e.target.value)}
+                                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer hover:border-slate-300 transition-all"
+                                        >
+                                            {LANGUAGES.map(lang => (
+                                                <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                            ))}
+                                        </select>
+                                        <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
+                                            <CloseIcon size={24} className="text-slate-400" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <form onSubmit={handleSave} className="space-y-6">
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Sector Name</label>
+                                        <div className="space-y-2 col-span-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Sector Name ({LANGUAGES.find(l => l.code === editLang)?.label})</label>
                                             <input
-                                                required
+                                                required={editLang === 'en'}
                                                 type="text"
-                                                value={currentSector.sector_name}
-                                                onChange={(e) => setCurrentSector({ ...currentSector, sector_name: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-black/20 transition-all font-bold text-sm"
-                                                placeholder="e.g. Technology"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Telugu Name</label>
-                                            <input
-                                                type="text"
-                                                value={currentSector.sector_name_telugu}
-                                                onChange={(e) => setCurrentSector({ ...currentSector, sector_name_telugu: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-black/20 transition-all font-bold text-sm telugu-font"
-                                                placeholder="టెక్నాలజీ"
+                                                value={(editLang === 'en' ? currentSector.sector_name : currentSector[`sector_name_${editLang}` as keyof Sector]) || ""}
+                                                onChange={(e) => {
+                                                    if (editLang === 'en') {
+                                                        setCurrentSector({ ...currentSector, sector_name: e.target.value });
+                                                    } else {
+                                                        setCurrentSector({ ...currentSector, [`sector_name_${editLang}`]: e.target.value });
+                                                    }
+                                                }}
+                                                className={`w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-black/20 transition-all font-bold text-sm ${editLang === 'telugu' ? 'telugu-font' : ''}`}
+                                                placeholder={`e.g. Technology`}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Primary Planet</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Primary Planet ({LANGUAGES.find(l => l.code === editLang)?.label})</label>
                                         <input
                                             type="text"
-                                            value={currentSector.primary_planet}
-                                            onChange={(e) => setCurrentSector({ ...currentSector, primary_planet: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-black/20 transition-all font-bold text-sm"
+                                            value={(editLang === 'en' ? currentSector.primary_planet : currentSector[`primary_planet_${editLang}` as keyof Sector]) || ""}
+                                            onChange={(e) => {
+                                                if (editLang === 'en') {
+                                                    setCurrentSector({ ...currentSector, primary_planet: e.target.value });
+                                                } else {
+                                                    setCurrentSector({ ...currentSector, [`primary_planet_${editLang}`]: e.target.value });
+                                                }
+                                            }}
+                                            className={`w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:border-black/20 transition-all font-bold text-sm ${editLang === 'telugu' ? 'telugu-font' : ''}`}
                                             placeholder="e.g. Mercury"
                                         />
                                     </div>

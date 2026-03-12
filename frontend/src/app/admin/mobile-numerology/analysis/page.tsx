@@ -1,8 +1,8 @@
-"use client";
-
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Smartphone, Sparkles, AlertCircle, ArrowLeft, History, CheckCircle, Save, Users, Star, Calendar, EyeOff, PlusCircle } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Smartphone, Sparkles, AlertCircle, ArrowLeft, History, CheckCircle, Save, Users, Star, Calendar, EyeOff, PlusCircle, CreditCard } from "lucide-react";
+import { API_BASE_URL } from "@/lib/constants";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Client {
     id: number;
@@ -25,8 +25,8 @@ interface PlanetRelation {
 }
 
 export default function NewAnalysisPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [mobile, setMobile] = useState("");
     const [dob, setDob] = useState("");
     const [loading, setLoading] = useState(false);
@@ -43,6 +43,8 @@ export default function NewAnalysisPage() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [availableCredits, setAvailableCredits] = useState<number>(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     // Data for Auspicious Numbers
     const [planets, setPlanets] = useState<Planet[]>([]);
@@ -58,8 +60,8 @@ export default function NewAnalysisPage() {
             if (!token) return;
             try {
                 const [pRes, prRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/planets`, { headers: { Authorization: `Bearer ${token}` } }),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/planet-relations`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API_BASE_URL}/admin/planets`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API_BASE_URL}/admin/planet-relations`, { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
                 if (pRes.ok) setPlanets(await pRes.json());
                 if (prRes.ok) setPlanetRelations(await prRes.json());
@@ -70,6 +72,7 @@ export default function NewAnalysisPage() {
             }
         };
         init();
+        fetchAvailableCredits();
 
         const phoneParam = searchParams.get('number');
         const dobParam = searchParams.get('dob');
@@ -196,7 +199,7 @@ export default function NewAnalysisPage() {
         }
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`http://localhost:8080/api/admin/clients/search?query=${encodeURIComponent(query)}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients/search?query=${encodeURIComponent(query)}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -210,7 +213,7 @@ export default function NewAnalysisPage() {
     const fetchClient = async (id: string) => {
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`http://localhost:8080/api/admin/clients/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -226,7 +229,7 @@ export default function NewAnalysisPage() {
     const fetchHistory = async (id: string) => {
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`http://localhost:8080/api/admin/clients/${id}/history`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients/${id}/history`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
@@ -234,6 +237,21 @@ export default function NewAnalysisPage() {
                 setHistory(data.filter((h: any) => h.type === 'Mobile'));
             }
         } catch (e) { console.error(e); }
+    };
+
+    const fetchAvailableCredits = async () => {
+        try {
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableCredits(data.credits_remaining);
+            }
+        } catch (e) {
+            console.error("Failed to fetch credits", e);
+        }
     };
 
     const resetAnalysis = () => {
@@ -248,12 +266,13 @@ export default function NewAnalysisPage() {
         if (!number) return;
         setLoading(true);
         setError("");
+        const token = localStorage.getItem("admin_token");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/mobile-numerology/check`, {
+            const res = await fetch(`${API_BASE_URL}/admin/mobile-astrology/check`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('admin_token')}`
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     mobile_number: number,
@@ -267,9 +286,23 @@ export default function NewAnalysisPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Analysis failed");
 
+            let newCheckId = editingId;
             if (data.check_id) {
-                setEditingId(data.check_id);
+                newCheckId = data.check_id;
+                setEditingId(newCheckId);
                 if (currentClientId) fetchHistory(String(currentClientId));
+            }
+
+            // Automatic Confirm if Client Selected
+            if (currentClientId && newCheckId && save) {
+                await fetch(`${API_BASE_URL}/admin/astrology/confirm`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ check_id: newCheckId, type: 'Mobile' })
+                });
             }
 
             // --- Enhanced Calculations for Last 4 Digits ---
@@ -292,7 +325,18 @@ export default function NewAnalysisPage() {
             setError(err.message);
         } finally {
             setLoading(false);
+            setShowConfirmModal(false);
+            fetchAvailableCredits();
         }
+    };
+
+    const handleSaveRequest = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!mobile || !currentClientId) {
+            handleSubmit(e);
+            return;
+        }
+        setShowConfirmModal(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -307,17 +351,23 @@ export default function NewAnalysisPage() {
                     <button onClick={() => {
                         const params = new URLSearchParams();
                         if (currentClientId) params.set('client_id', String(currentClientId));
-                        router.push(`/admin/mobile-numerology?${params.toString()}`);
+                        navigate(`/admin/mobile-astrology?${params.toString()}`);
                     }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
-                            <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                {editingId ? <Users size={24} /> : <Sparkles size={24} />}
-                            </span>
-                            {editingId ? 'Edit Analysis' : 'New Analysis'}
-                        </h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-black flex items-center gap-3 text-foreground tracking-tight">
+                                <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                    {editingId ? <Users size={24} /> : <Sparkles size={24} />}
+                                </span>
+                                {editingId ? 'Edit Analysis' : 'New Analysis'}
+                            </h1>
+                            <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 flex items-center gap-2">
+                                <CreditCard size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Available: {availableCredits}</span>
+                            </div>
+                        </div>
                         <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">
                             {editingId ? 'Update existing record' : 'Create a new vibrational reading'}
                         </p>
@@ -395,7 +445,7 @@ export default function NewAnalysisPage() {
                 <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Smartphone size={120} />
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <form onSubmit={handleSaveRequest} className="space-y-6 relative z-10">
                     <div className="space-y-2">
                         <label className="text-xs font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-2 pl-1">
                             <Smartphone size={16} />
@@ -431,6 +481,42 @@ export default function NewAnalysisPage() {
                         </button>
                     </div>
                 </form>
+
+                {/* Credit Confirmation Modal */}
+                <AnimatePresence>
+                    {showConfirmModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                            <motion.div 
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl space-y-6 text-center"
+                            >
+                                <div className="w-20 h-20 bg-purple-50 text-[#4B2E83] rounded-full flex items-center justify-center mx-auto">
+                                    <CreditCard size={40} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Confirm Consumption</h3>
+                                    <p className="text-slate-500 text-sm font-medium">This analysis will consume <span className="text-[#4B2E83] font-bold">1 credit</span> from your balance.</p>
+                                </div>
+                                <div className="flex flex-col gap-2 pt-2">
+                                    <button 
+                                        onClick={() => checkMobile(mobile)}
+                                        className="w-full py-4 bg-[#4B2E83] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg"
+                                    >
+                                        Confirm & Continue
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowConfirmModal(false)}
+                                        className="w-full py-4 bg-white text-slate-400 border border-slate-100 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* History Section */}

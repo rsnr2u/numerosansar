@@ -1,15 +1,17 @@
-"use client";
+
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Settings, Save, Zap, Database, Globe, Sliders, Code, CreditCard, Wallet, Eye, EyeOff } from "lucide-react";
+import { Settings, Save, Zap, Database, Globe, Sliders, Code, CreditCard, Wallet, Eye, EyeOff, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 export default function SystemConfigPage() {
     const [config, setConfig] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [visibleFields, setVisibleFields] = useState<string[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchConfig();
@@ -56,13 +58,13 @@ export default function SystemConfigPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">System Configuration</h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Global Governance & Mapping Protocol</p>
+                    <h1 className="text-4xl font-black tracking-tight text-slate-900">System Configuration</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-1">Global Governance & Mapping Protocol</p>
                 </div>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-2xl transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-8 py-4 bg-[#4B2E83] text-white rounded-xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#5D3AB0] hover:shadow-2xl hover:shadow-purple-900/20 transition-all shadow-xl shadow-purple-900/10 active:scale-95 disabled:opacity-50"
                 >
                     {saving ? "Deploying..." : <><Save size={16} /> Save Changes</>}
                 </button>
@@ -70,14 +72,15 @@ export default function SystemConfigPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Feature Toggles */}
-                <div className="bg-white border border-black/5 p-6 rounded-2xl shadow-xl space-y-6">
-                    <h3 className="text-xs font-black uppercase tracking-widest border-b border-black/5 pb-4 flex items-center gap-2">
-                        <Zap size={16} /> Feature Intelligence
+                <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8">
+                    <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-3 text-slate-900">
+                        <div className="w-8 h-8 rounded-lg bg-[#4B2E83]/5 text-[#4B2E83] flex items-center justify-center"><Zap size={16} /></div>
+                        Feature Intelligence
                     </h3>
                     <div className="space-y-6">
                         {[
-                            { key: 'enable_vehicle', label: "Vehicle Numerology", desc: "Enable/Disable across entire platform" },
-                            { key: 'enable_business', label: "Business Numerology", desc: "Enable/Disable across entire platform" },
+                            { key: 'enable_vehicle', label: "Vehicle Astrology", desc: "Enable/Disable across entire platform" },
+                            { key: 'enable_business', label: "Business Astrology", desc: "Enable/Disable across entire platform" },
                             { key: 'enable_ai', label: "AI Suggestions", desc: "Enable Gemini-powered name suggestions" },
                             { key: 'enable_pdf', label: "PDF Reports", desc: "Allow vendors to export results" },
                         ].map(feature => (
@@ -91,9 +94,9 @@ export default function SystemConfigPage() {
                                         const current = config.find(c => c.config_key === feature.key)?.config_value;
                                         updateValue(feature.key, current === 'true' ? 'false' : 'true');
                                     }}
-                                    className={`w-12 h-6 rounded-full p-1 transition-colors ${config.find(c => c.config_key === feature.key)?.config_value === 'true' ? 'bg-[#10B981]' : 'bg-black/10'}`}
+                                    className={`w-12 h-6 rounded-full p-1 transition-colors ${config.find(c => c.config_key === feature.key)?.config_value === 'true' ? 'bg-[#4B2E83]' : 'bg-slate-200'}`}
                                 >
-                                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${config.find(c => c.config_key === feature.key)?.config_value === 'true' ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${config.find(c => c.config_key === feature.key)?.config_value === 'true' ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                 </button>
                             </div>
                         ))}
@@ -101,11 +104,11 @@ export default function SystemConfigPage() {
                 </div>
 
                 {/* Calculation Rules */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                    <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-lg"><Code size={18} /></div>
-                            <h3 className="text-xl font-black uppercase tracking-tight italic">Calculation Rules</h3>
+                            <div className="w-10 h-10 rounded-xl bg-[#4B2E83] text-[#C9A227] flex items-center justify-center shadow-lg"><Code size={18} /></div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Calculation Rules</h3>
                         </div>
                     </div>
 
@@ -172,9 +175,9 @@ export default function SystemConfigPage() {
                                 </div>
                                 <button
                                     onClick={() => updateValue('enable_razorpay', config.find(c => c.config_key === 'enable_razorpay')?.config_value === 'true' ? 'false' : 'true')}
-                                    className={`w-10 h-5 rounded-full p-1 transition-colors ${config.find(c => c.config_key === 'enable_razorpay')?.config_value === 'true' ? 'bg-[#10B981]' : 'bg-black/10'}`}
+                                    className={`w-10 h-5 rounded-full p-1 transition-colors ${config.find(c => c.config_key === 'enable_razorpay')?.config_value === 'true' ? 'bg-[#4B2E83]' : 'bg-slate-200'}`}
                                 >
-                                    <div className={`w-3 h-3 bg-white rounded-full transition-transform ${config.find(c => c.config_key === 'enable_razorpay')?.config_value === 'true' ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                    <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${config.find(c => c.config_key === 'enable_razorpay')?.config_value === 'true' ? 'translate-x-5' : 'translate-x-0'}`}></div>
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 gap-3 pl-10">

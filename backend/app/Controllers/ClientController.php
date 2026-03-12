@@ -51,13 +51,39 @@ class ClientController extends BaseController
 
             if ($shouldPaginate) {
                 $totalRecords = $this->model->countAllResults(false);
+
+                // Calculate Active Today
+                $today = date('Y-m-d');
+                $activeToday = (new ClientModel())
+                    ->where('user_id', $vendorId)
+                    ->where('DATE(created_at)', $today)
+                    ->countAllResults();
+
+                // Calculate Success Rate (Engaged Clients / Total Clients)
+                // Engaged = Has at least one check
+                $engagedCount = (new ClientModel())
+                    ->where('user_id', $vendorId)
+                    ->groupStart()
+                    ->where('(SELECT COUNT(*) FROM client_name_checks WHERE client_id = clients.id) >', 0)
+                    ->orWhere('(SELECT COUNT(*) FROM client_business_checks WHERE client_id = clients.id) >', 0)
+                    ->orWhere('(SELECT COUNT(*) FROM client_mobile_checks WHERE client_id = clients.id) >', 0)
+                    ->orWhere('(SELECT COUNT(*) FROM client_vehicle_checks WHERE client_id = clients.id) >', 0)
+                    ->groupEnd()
+                    ->countAllResults();
+
+                $successRate = $totalRecords > 0 ? round(($engagedCount / $totalRecords) * 100) : 0;
+
                 $data = $this->model->orderBy('id', 'DESC')->paginate((int) $perPage, 'default', (int) $page);
 
                 return $this->respond([
                     'data' => $data,
                     'total' => $totalRecords,
                     'current_page' => (int) $page,
-                    'per_page' => (int) $perPage
+                    'per_page' => (int) $perPage,
+                    'stats' => [
+                        'active_today' => $activeToday,
+                        'success_rate' => $successRate . '%'
+                    ]
                 ]);
             }
 
@@ -178,9 +204,14 @@ class ClientController extends BaseController
     {
         $id = $this->request->getVar('check_id');
         $type = $this->request->getVar('type');
+        $creditType = $this->request->getVar('credit_type') ?? 'regular';
 
         if (!$id || !$type) {
             return $this->fail('Check ID and Type are required');
+        }
+
+        if (!in_array($creditType, ['regular', 'whitelabel'])) {
+            return $this->fail('Invalid credit type');
         }
 
         $modelClass = null;
@@ -208,18 +239,69 @@ class ClientController extends BaseController
         $model = new $modelClass();
         $check = $model->find($id);
         $clientId = $check['client_id'];
+        $userId = $this->getVendorId();
 
-        // Un-confirm others of same type for this client
-        $model->where(['client_id' => $clientId])->set(['is_confirmed' => 0])->update();
+        // --- Transaction-safe credit deduction ---
+        $db = \Config\Database::connect();
+        $db->transStart();
 
-        // Confirm this one
-        $model->update($id, ['is_confirmed' => 1]);
+        try {
+            // Skip credit deduction for super_admin
+            if ($this->getVendorRole() !== 'super_admin') {
+                // Check if this specific check was already confirmed (re-confirm = no extra charge)
+                $usageModel = new \App\Models\CreditUsageModel();
+                $existingUsage = $usageModel
+                    ->where('check_id', $id)
+                    ->where('check_type', $type)
+                    ->where('user_id', $userId)
+                    ->first();
 
-        if ($type === 'Name') {
-            $clientModel = new ClientModel();
-            $clientModel->update($clientId, ['calling_name' => $check['name_value']]);
+                if (!$existingUsage) {
+                    // Deduct credit
+                    $walletModel = new \App\Models\CreditWalletModel();
+                    $deducted = $walletModel->deductCredit($userId, $creditType);
+
+                    if (!$deducted) {
+                        $db->transRollback();
+                        $label = $creditType === 'whitelabel' ? 'Whitelabel' : 'Regular';
+                        return $this->fail("Insufficient {$label} credits. Please purchase more credits.", 402);
+                    }
+
+                    // Log usage
+                    $usageModel->insert([
+                        'user_id' => $userId,
+                        'check_id' => $id,
+                        'check_type' => $type,
+                        'credit_type' => $creditType,
+                        'client_id' => $clientId,
+                    ]);
+                }
+            }
+
+            // Un-confirm others of same type for this client
+            $model->where(['client_id' => $clientId])->set(['is_confirmed' => 0])->update();
+
+            // Confirm this one
+            $model->update($id, ['is_confirmed' => 1]);
+
+            if ($type === 'Name') {
+                $clientModel = new ClientModel();
+                $clientModel->update($clientId, ['calling_name' => $check['name_value']]);
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return $this->fail('Transaction failed. No credits were deducted.');
+            }
+
+            return $this->respond([
+                'message' => 'Selection confirmed successfully',
+                'credit_type' => $creditType,
+            ]);
+        } catch (\Exception $e) {
+            $db->transRollback();
+            return $this->fail('Confirmation failed: ' . $e->getMessage());
         }
-
-        return $this->respond(['message' => 'Selection confirmed successfully']);
     }
 }

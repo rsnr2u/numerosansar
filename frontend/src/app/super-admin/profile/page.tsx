@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, ShieldCheck, Key, Save, Eye, EyeOff, ShieldAlert, BadgeCheck, LogOut } from "lucide-react";
@@ -69,13 +67,13 @@ export default function SuperAdminProfilePage() {
         }
     };
 
-    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase text-black/20 italic tracking-widest">Authenticating Identity...</div>;
+    if (loading) return <div className="p-20 text-center animate-pulse font-black uppercase text-black/20 tracking-widest">Authenticating Identity...</div>;
 
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Master Profile</h1>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase">Master Profile</h1>
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Root Authority & Security Protocol</p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -102,7 +100,7 @@ export default function SuperAdminProfilePage() {
                         </div>
 
                         <div className="mt-8 space-y-2">
-                            <h2 className="text-3xl font-black tracking-tighter uppercase italic">{user?.username || 'Super Admin'}</h2>
+                            <h2 className="text-3xl font-black tracking-tighter uppercase">{user?.username || 'Super Admin'}</h2>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black/30">System Administrator - Root</p>
                         </div>
 
@@ -130,7 +128,7 @@ export default function SuperAdminProfilePage() {
                                 <User size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black uppercase tracking-tight italic">Master Credentials</h3>
+                                <h3 className="text-xl font-black uppercase tracking-tight">Master Credentials</h3>
                                 <p className="text-[10px] font-black text-black/30 uppercase tracking-widest">Update platform identity name</p>
                             </div>
                         </div>
@@ -168,7 +166,7 @@ export default function SuperAdminProfilePage() {
                                 <Key size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black uppercase tracking-tight italic">Security Protocol</h3>
+                                <h3 className="text-xl font-black uppercase tracking-tight">Security Protocol</h3>
                                 <p className="text-[10px] font-black text-black/30 uppercase tracking-widest">Update master access key</p>
                             </div>
                         </div>

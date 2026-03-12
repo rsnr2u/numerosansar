@@ -1,7 +1,5 @@
-"use client";
-
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { User, Briefcase, Car, Smartphone, ArrowRight, CheckCircle2 } from "lucide-react";
@@ -9,13 +7,13 @@ import { User, Briefcase, Car, Smartphone, ArrowRight, CheckCircle2 } from "luci
 export default function ServicesPage() {
     const services = [
         {
-            title: "Name Numerology",
+            title: "Name Astrology",
             icon: <User size={24} />,
             desc: "Discover the vibrational power of your name through sacred Chaldean and Pythagorean analysis. Align your identity with your divine destiny.",
             features: ["Vowel/Consonant Analysis", "Life Path Calculation", "Compound Number Meanings"],
         },
         {
-            title: "Business Numerology",
+            title: "Business Astrology",
             icon: <Briefcase size={24} />,
             desc: "Ensure your business name resonates with prosperity and growth. Sacred brand alignment for auspicious corporate success.",
             features: ["Brand Name Optimization", "Sector Compatibility", "Auspicious Incorporation Dates"],
@@ -27,9 +25,9 @@ export default function ServicesPage() {
             features: ["Plate Number Evaluation", "Color Compatibility", "Auspicious Selection"],
         },
         {
-            title: "Mobile Numerology",
+            title: "Mobile Astrology",
             icon: <Smartphone size={24} />,
-            desc: "Choose a mobile number that enhances your spiritual and professional energy. Align your digital presence with divine vibrations.",
+            desc: "Choose a mobile number that enhances your spiritual and professional energy. Align your digital presence with divine celestial vibrations.",
             features: ["Frequency Alignment", "Connectivity Analysis", "Professional Suitability"],
         }
     ];
@@ -50,7 +48,7 @@ export default function ServicesPage() {
                             <span className="text-base">🙏</span> Sacred Services
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[#1E293B]">Divine Analytical <span className="text-gradient-gold">Services</span></h1>
-                        <p className="text-lg text-slate-500 max-w-2xl font-medium leading-relaxed">Sacred numerological solutions for every aspect of your life and business, guided by ancient wisdom.</p>
+                        <p className="text-lg text-slate-500 max-w-2xl font-medium leading-relaxed">Sacred astrological solutions for every aspect of your life and business, guided by ancient wisdom.</p>
                     </div>
                 </section>
 
@@ -70,7 +68,7 @@ export default function ServicesPage() {
                                     <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-200/40 text-[#D4940A] group-hover:bg-[#1E293B] group-hover:text-[#F09819] transition-all">
                                         {s.icon}
                                     </div>
-                                    <Link href="/contact" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#D4940A] transition-colors flex items-center gap-2 cursor-pointer">
+                                    <Link to="/contact" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#D4940A] transition-colors flex items-center gap-2 cursor-pointer">
                                         Details <ArrowRight size={12} />
                                     </Link>
                                 </div>

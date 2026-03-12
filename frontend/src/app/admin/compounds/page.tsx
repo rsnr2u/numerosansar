@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Database, PenTool, Plus, Trash2, Save, Download, Search, FileText, X, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -16,6 +14,14 @@ interface CompoundNumber {
     description: string;
     number: number;
     result: string;
+    description_telugu?: string;
+    description_hindi?: string;
+    description_bengali?: string;
+    description_devanagari?: string;
+    description_kannada?: string;
+    description_tamil?: string;
+    description_malayalam?: string;
+    description_gujarati?: string;
 }
 
 export default function AdminCompounds() {
@@ -25,7 +31,20 @@ export default function AdminCompounds() {
     const [searchTerm, setSearchTerm] = useState("");
     const [resultFilter, setResultFilter] = useState("All");
     const [userRole, setUserRole] = useState<string | null>(null);
-    const router = useRouter();
+    const [editLang, setEditLang] = useState<string>("en");
+    const navigate = useNavigate();
+
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'telugu', label: 'Telugu' },
+        { code: 'hindi', label: 'Hindi' },
+        { code: 'bengali', label: 'Bengali' },
+        { code: 'devanagari', label: 'Devanagari' },
+        { code: 'kannada', label: 'Kannada' },
+        { code: 'tamil', label: 'Tamil' },
+        { code: 'malayalam', label: 'Malayalam' },
+        { code: 'gujarati', label: 'Gujarati' }
+    ];
 
     useEffect(() => {
         setUserRole(localStorage.getItem('user_role'));
@@ -95,13 +114,22 @@ export default function AdminCompounds() {
 
     const handleSave = async () => {
         try {
-            await api.post("/admin/meanings", {
+            const payload = {
                 id: selected.id?.toString() || "",
                 number: selected.number?.toString() || "",
                 title: selected.title || "",
                 description: selected.description || "",
-                result: selected.result || "Good"
-            });
+                result: selected.result || "Good",
+                description_telugu: selected.description_telugu || "",
+                description_hindi: selected.description_hindi || "",
+                description_bengali: selected.description_bengali || "",
+                description_devanagari: selected.description_devanagari || "",
+                description_kannada: selected.description_kannada || "",
+                description_tamil: selected.description_tamil || "",
+                description_malayalam: selected.description_malayalam || "",
+                description_gujarati: selected.description_gujarati || ""
+            };
+            await api.post("/admin/meanings", payload);
             setSelected({});
             fetchCompounds();
         } catch (err) {
@@ -253,13 +281,30 @@ export default function AdminCompounds() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground block mb-2 font-black">Detailed Meaning</label>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black">Detailed Meaning</label>
+                                        <select
+                                            value={editLang}
+                                            onChange={(e) => setEditLang(e.target.value)}
+                                            className="bg-card/50 border border-border rounded-lg px-2 py-1 text-[10px] font-bold outline-none focus:border-primary transition-all"
+                                        >
+                                            {LANGUAGES.map(lang => (
+                                                <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <textarea
                                         rows={5}
-                                        value={selected.description || ""}
-                                        onChange={(e) => setSelected({ ...selected, description: e.target.value })}
+                                        value={editLang === 'en' ? (selected.description || "") : (selected[`description_${editLang}` as keyof CompoundNumber] as string || "")}
+                                        onChange={(e) => {
+                                            if (editLang === 'en') {
+                                                setSelected({ ...selected, description: e.target.value });
+                                            } else {
+                                                setSelected({ ...selected, [`description_${editLang}`]: e.target.value });
+                                            }
+                                        }}
                                         className="w-full bg-input/20 border border-border/50 rounded-xl p-3 outline-none text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all leading-relaxed text-sm"
-                                        placeholder="Unveil the esoteric essence..."
+                                        placeholder={`Unveil the esoteric essence in ${LANGUAGES.find(l => l.code === editLang)?.label}...`}
                                     />
                                 </div>
 

@@ -44,7 +44,15 @@ class UserController extends ResourceController
 
         $db = \Config\Database::connect();
         $builder = $db->table('users u');
-        $builder->select('u.id, u.username, u.full_name, u.email, u.mobile, u.business_name, u.city, u.created_at, s.status as sub_status, s.ends_at, sp.name as plan_name, (SELECT COUNT(*) FROM clients WHERE user_id = u.id) as client_count');
+        $builder->select('
+            u.id, u.username, u.full_name, u.email, u.mobile, u.business_name, u.city, u.created_at, u.last_login as last_activity, u.account_status,
+            s.status as sub_status, s.ends_at, 
+            sp.name as plan_name, 
+            (SELECT COUNT(*) FROM clients WHERE user_id = u.id) as client_count,
+            (SELECT regular_balance FROM credit_wallets WHERE user_id = u.id LIMIT 1) as credits_remaining,
+            (SELECT COUNT(*) FROM credit_usage WHERE user_id = u.id) as credits_used,
+            (SELECT SUM(amount) FROM payments WHERE user_id = u.id AND status = "completed") as total_revenue
+        ');
         $builder->join('subscriptions s', 's.user_id = u.id', 'left');
         $builder->join('subscription_plans sp', 'sp.id = s.plan_id', 'left');
         $builder->where('u.role', 'numerologist');
@@ -59,15 +67,18 @@ class UserController extends ResourceController
                 ->like('u.username', $searchTerm)
                 ->orLike('u.full_name', $searchTerm)
                 ->orLike('u.email', $searchTerm)
+                ->orLike('u.mobile', $searchTerm)
                 ->orLike('u.business_name', $searchTerm)
                 ->groupEnd();
         }
 
         if (!empty($status) && $status !== 'all') {
             if ($status === 'active') {
-                $builder->where('s.status', 'active');
-            } else {
-                $builder->where('s.status !=', 'active');
+                $builder->where('u.account_status', 'active');
+            } else if ($status === 'suspended') {
+                $builder->where('u.account_status', 'suspended');
+            } else if ($status === 'blocked') {
+                $builder->where('u.account_status', 'blocked');
             }
         }
 
@@ -89,15 +100,33 @@ class UserController extends ResourceController
 
         // Get total count for pagination metadata
         $totalBuilder = clone $builder;
-        $total = $totalBuilder->countAllResults();
+        $total = $totalBuilder->countAllResults(false);
 
         $builder->orderBy('u.created_at', 'DESC');
         $builder->limit($limit, $offset);
 
         $vendors = $builder->get()->getResult();
 
+        // Global Stats for the header cards
+        $stats = [
+            'total_numerologists' => $db->table('users')->where('role', 'numerologist')->countAllResults(),
+            'active_users' => $db->table('users')->where('role', 'numerologist')->where('account_status', 'active')->countAllResults(),
+            'low_credit_users' => $db->table('users u')
+                ->join('credit_wallets cw', 'cw.user_id = u.id')
+                ->where('u.role', 'numerologist')
+                ->where('cw.regular_balance <', 5)
+                ->countAllResults(),
+            'monthly_revenue' => $db->table('payments')
+                ->where('status', 'completed')
+                ->where('MONTH(created_at)', date('m'))
+                ->where('YEAR(created_at)', date('Y'))
+                ->selectSum('amount')
+                ->get()->getRow()->amount ?? 0
+        ];
+
         return $this->respond([
             'data' => $vendors,
+            'stats' => $stats,
             'pagination' => [
                 'total' => $total,
                 'page' => $page,
@@ -202,11 +231,9 @@ class UserController extends ResourceController
         }
 
         $json = $this->request->getJSON();
-        $status = $json->status ?? 'Active'; // Note: Migration uses 'Active', 'Suspended', 'Blocked'
+        $status = $json->status ?? 'Active';
 
         $db = \Config\Database::connect();
-
-        // Update both user status and subscription status for clarity
         $db->table('users')->where('id', $id)->update(['account_status' => $status]);
 
         $subStatus = ($status === 'Active') ? 'active' : (($status === 'Suspended') ? 'suspended' : 'canceled');
@@ -215,6 +242,34 @@ class UserController extends ResourceController
         $this->logActivity("status_change", $id, "Updated to $status");
 
         return $this->respond(['message' => "Vendor status updated to $status"]);
+    }
+
+    public function bulkUpdateStatus()
+    {
+        $userData = $this->request->userData ?? null;
+        if (!$userData || $userData['role'] !== 'super_admin') {
+            return $this->failForbidden('Access denied');
+        }
+
+        $json = $this->request->getJSON();
+        $userIds = $json->user_ids ?? [];
+        $status = $json->status ?? 'Active';
+
+        if (empty($userIds)) {
+            return $this->fail('No users selected');
+        }
+
+        $db = \Config\Database::connect();
+        $db->table('users')->whereIn('id', $userIds)->update(['account_status' => $status]);
+
+        $subStatus = ($status === 'Active') ? 'active' : (($status === 'Suspended') ? 'suspended' : 'canceled');
+        $db->table('subscriptions')->whereIn('user_id', $userIds)->update(['status' => $subStatus]);
+
+        foreach ($userIds as $id) {
+            $this->logActivity("bulk_status_change", $id, "Updated to $status");
+        }
+
+        return $this->respond(['message' => "Successfully updated " . count($userIds) . " users to $status"]);
     }
 
     public function updateSubscription($id = null)
@@ -284,9 +339,10 @@ class UserController extends ResourceController
         }
 
         $userId = $this->model->getInsertID();
+        $db = \Config\Database::connect();
 
+        // 1. Initialize Subscription
         if ($planId) {
-            $db = \Config\Database::connect();
             $db->table('subscriptions')->insert([
                 'user_id' => $userId,
                 'plan_id' => $planId,
@@ -295,9 +351,52 @@ class UserController extends ResourceController
                 'starts_at' => date('Y-m-d H:i:s'),
                 'ends_at' => date('Y-m-d H:i:s', strtotime($billingCycle === 'yearly' ? '+1 year' : '+30 days'))
             ]);
+
+            // 2. Initialize Credit Wallet and Allocate Quota
+            $plan = $db->table('subscription_plans')->where('id', $planId)->get()->getRow();
+            if ($plan && isset($plan->credits)) {
+                $initialCredits = (int) $plan->credits;
+
+                // Bonus credits if provided (from admin modal)
+                $bonusCredits = (int) ($data['initial_bonus_credits'] ?? 0);
+                $totalInitial = $initialCredits + $bonusCredits;
+
+                // Create wallet
+                $db->table('credit_wallets')->insert([
+                    'user_id' => $userId,
+                    'regular_balance' => $totalInitial,
+                    'whitelabel_balance' => 0,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+
+                // Log initial credit grant in purchases ledger for auditing
+                $db->table('credit_purchases')->insert([
+                    'user_id' => $userId,
+                    'credit_type' => 'regular',
+                    'quantity' => $totalInitial,
+                    'unit_price' => 0,
+                    'total_amount' => 0,
+                    'status' => 'completed',
+                    'notes' => 'Initial allocation from ' . $plan->name . ($bonusCredits > 0 ? " (+{$bonusCredits} bonus)" : ""),
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        } else {
+            // Even if no plan, initialize empty wallet
+            $db->table('credit_wallets')->insert([
+                'user_id' => $userId,
+                'regular_balance' => 0,
+                'whitelabel_balance' => 0,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
         }
 
-        return $this->respondCreated(['id' => $userId, 'message' => 'User created successfully']);
+        $this->logActivity("user_creation", $userId, "Newly architected entity with plan #$planId");
+
+        return $this->respondCreated(['id' => $userId, 'message' => 'User architected successfully with credit infrastructure initialized']);
     }
 
     public function update($id = null)

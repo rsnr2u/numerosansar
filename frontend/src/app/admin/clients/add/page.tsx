@@ -1,19 +1,20 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { User, Phone, Mail, MapPin, Calendar, Save, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
+import { API_BASE_URL, ROUTES } from "@/lib/constants";
 
 export default function AddClientPage() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     const [formData, setFormData] = useState({
         full_name: "",
         calling_name: "",
+        profession: "",
         dob: "",
+        time_of_birth: "",
         gender: "Male",
         mobile_number: "",
         email_id: "",
@@ -33,7 +34,7 @@ export default function AddClientPage() {
         setError("");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/clients`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -45,7 +46,7 @@ export default function AddClientPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Failed to create client");
 
-            router.push("/admin/clients");
+            navigate(ROUTES.ADMIN.CLIENTS);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -56,7 +57,7 @@ export default function AddClientPage() {
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             <div className="flex items-center gap-4">
-                <Link href="/admin/clients">
+                <Link to={ROUTES.ADMIN.CLIENTS}>
                     <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-foreground">
                         <ArrowLeft size={20} />
                     </button>
@@ -104,6 +105,21 @@ export default function AddClientPage() {
                         />
                     </div>
 
+                    {/* Profession */}
+                    <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground flex items-center gap-2">
+                            <User size={14} className="text-accent" /> Profession
+                        </label>
+                        <input
+                            type="text"
+                            name="profession"
+                            value={formData.profession}
+                            onChange={handleChange}
+                            className="w-full bg-input border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:border-accent"
+                            placeholder="e.g. Software Engineer"
+                        />
+                    </div>
+
                     {/* DOB */}
                     <div className="space-y-2">
                         <label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -115,6 +131,20 @@ export default function AddClientPage() {
                             value={formData.dob}
                             onChange={handleChange}
                             required
+                            className="w-full bg-input border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:border-accent"
+                        />
+                    </div>
+
+                    {/* Time of Birth */}
+                    <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Calendar size={14} className="text-accent" /> Time of Birth
+                        </label>
+                        <input
+                            type="time"
+                            name="time_of_birth"
+                            value={formData.time_of_birth}
+                            onChange={handleChange}
                             className="w-full bg-input border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:border-accent"
                         />
                     </div>

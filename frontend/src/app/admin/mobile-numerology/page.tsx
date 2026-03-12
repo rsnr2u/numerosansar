@@ -1,9 +1,8 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Smartphone, Sparkles, ArrowLeft, History, Users, Trash2, Pencil, Calendar, PlusCircle, EyeOff, CheckCircle, Save } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
+import { API_BASE_URL, ROUTES } from "@/lib/constants";
 
 interface Client {
     id: number;
@@ -12,9 +11,9 @@ interface Client {
     dob: string;
 }
 
-export default function MobileNumerologyPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+export default function MobileAstrologyPage() {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [history, setHistory] = useState<any[]>([]);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [clientSearch, setClientSearch] = useState("");
@@ -48,7 +47,7 @@ export default function MobileNumerologyPage() {
     const fetchClient = async (id: string) => {
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`http://localhost:8080/api/admin/clients/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -63,7 +62,7 @@ export default function MobileNumerologyPage() {
     const searchClients = async (query: string) => {
         if (!query) { setClientResults([]); return; }
         try {
-            const res = await fetch(`http://localhost:8080/api/admin/clients?search=${query}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients?search=${query}`, {
                 headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` }
             });
             if (res.ok) setClientResults(await res.json());
@@ -73,7 +72,7 @@ export default function MobileNumerologyPage() {
     const fetchHistory = async (id: string) => {
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/clients/${id}/history`, {
+            const res = await fetch(`${API_BASE_URL}/admin/clients/${id}/history`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -99,7 +98,7 @@ export default function MobileNumerologyPage() {
 
         try {
             const token = localStorage.getItem("admin_token");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/admin/mobile-numerology/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/admin/mobile-astrology/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -122,14 +121,14 @@ export default function MobileNumerologyPage() {
         params.set('number', item.name_value);
         params.set('edit_id', String(item.id));
         if (selectedClient?.dob) params.set('dob', selectedClient.dob);
-        router.push(`/admin/mobile-numerology/analysis?${params.toString()}`);
+        navigate(`/admin/mobile-astrology/analysis?${params.toString()}`);
     };
 
     const navigateToNew = () => {
         const params = new URLSearchParams();
         if (currentClientId) params.set('client_id', String(currentClientId));
         if (selectedClient?.dob) params.set('dob', selectedClient.dob);
-        router.push(`/admin/mobile-numerology/analysis?${params.toString()}`);
+        navigate(`/admin/mobile-astrology/analysis?${params.toString()}`);
     };
 
 
@@ -139,9 +138,9 @@ export default function MobileNumerologyPage() {
                 <div className="flex items-center gap-4">
                     <button onClick={() => {
                         if (currentClientId) {
-                            router.push(`/admin/clients/${currentClientId}`);
+                            navigate(`/admin/clients/${currentClientId}`);
                         } else {
-                            router.back();
+                            navigate(-1);
                         }
                     }} className="p-2.5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all text-muted-foreground hover:text-primary shadow-sm">
                         <ArrowLeft size={20} />
@@ -151,7 +150,7 @@ export default function MobileNumerologyPage() {
                             <span className="p-2.5 bg-primary/10 rounded-xl text-primary">
                                 <Smartphone size={24} />
                             </span>
-                            Mobile Numerology
+                            Mobile Astrology
                         </h1>
                         <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1 ml-1 opacity-60">Client Analysis Records</p>
                     </div>
@@ -231,7 +230,7 @@ export default function MobileNumerologyPage() {
                                     setShowDropdown(false);
                                     const params = new URLSearchParams(searchParams.toString());
                                     params.set('client_id', String(c.id));
-                                    router.replace(`?${params.toString()}`);
+                                    navigate(`?${params.toString()}`);
                                     fetchHistory(String(c.id));
                                 }} className="w-full text-left p-4 hover:bg-primary/5 flex justify-between items-center group transition-colors">
                                     <div className="flex flex-col">

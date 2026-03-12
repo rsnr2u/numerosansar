@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Grid, Sparkles, PenTool, Plus, Trash2, Save, Search, FileText, X, Download, Calendar, User, UserCheck, Shield, Zap, Globe, Info } from "lucide-react";
 import { api } from "@/lib/api";

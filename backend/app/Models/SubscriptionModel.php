@@ -15,7 +15,7 @@ class SubscriptionModel extends Model
 
     public function getUserSubscription($userId)
     {
-        return $this->select('subscriptions.*, subscription_plans.name as plan_name, subscription_plans.modules')
+        return $this->select('subscriptions.*, subscription_plans.name as plan_name, subscription_plans.modules, subscription_plans.type')
             ->join('subscription_plans', 'subscription_plans.id = subscriptions.plan_id')
             ->where('user_id', $userId)
             ->where('status', 'active')

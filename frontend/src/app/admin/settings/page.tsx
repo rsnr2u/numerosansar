@@ -1,14 +1,12 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { Save, Settings as SettingsIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Save, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 
 export default function AdminSettings() {
     const [settings, setSettings] = useState<any>({});
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchSettings();

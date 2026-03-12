@@ -57,19 +57,12 @@ abstract class BaseController extends Controller
             return false;
         }
 
-        $subModel = new \App\Models\SubscriptionModel();
-        $subscription = $subModel->getUserSubscription($userData['uid']);
+        // Universal Access: Module access is granted if the professional account is active.
+        // The credit system handles the actual restriction per transaction.
+        $userModel = new \App\Models\UserModel();
+        $user = $userModel->find($userData['uid']);
 
-        if (!$subscription) {
-            return false;
-        }
-
-        if (strtotime($subscription['ends_at']) < time()) {
-            return false;
-        }
-
-        $allowedModules = json_decode($subscription['modules'], true) ?: [];
-        return in_array($moduleCode, $allowedModules);
+        return $user && $user['account_status'] === 'Active';
     }
 
     protected function checkUsageLimit(): bool

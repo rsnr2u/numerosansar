@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrainCircuit, Save, Zap, ExternalLink, ShieldCheck, ShieldAlert, Sparkles, RefreshCw, Key, Eye, EyeOff } from "lucide-react";
@@ -76,13 +74,13 @@ export default function AISettingsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">AI Intelligence</h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Cognitive Processing & Suggestion Protocol</p>
+                    <h1 className="text-4xl font-black tracking-tight text-slate-900">AI Intelligence</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-1">Cognitive Processing & Suggestion Protocol</p>
                 </div>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-2xl transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-8 py-4 bg-[#4B2E83] text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#5D3AB0] shadow-xl shadow-purple-900/20 hover:shadow-2xl transition-all active:scale-95 disabled:opacity-50"
                 >
                     {saving ? "Rewiring..." : <><Save size={16} /> Update Configurations</>}
                 </button>
@@ -92,11 +90,11 @@ export default function AISettingsPage() {
                 {configs.map((config) => (
                     <div
                         key={config.provider_name}
-                        className={`bg-white border-2 transition-all p-6 rounded-xl shadow-xl relative overflow-hidden flex flex-col ${config.is_active ? 'border-black ring-4 ring-black/5 bg-slate-50' : 'border-black/5 opacity-60 hover:opacity-100'}`}
+                        className={`bg-white border-2 transition-all p-8 rounded-[2rem] shadow-xl relative overflow-hidden flex flex-col ${config.is_active ? 'border-[#4B2E83] ring-8 ring-[#4B2E83]/5' : 'border-slate-50 opacity-60 hover:opacity-100'}`}
                     >
                         {config.is_active && (
-                            <div className="absolute top-0 right-0 p-4">
-                                <div className="bg-green-500 text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-lg">Active Provider</div>
+                            <div className="absolute top-0 right-0 p-6">
+                                <div className="bg-[#4B2E83] text-[#C9A227] text-[8px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-lg border border-[#C9A227]/20">Active Provider</div>
                             </div>
                         )}
 
@@ -105,7 +103,7 @@ export default function AISettingsPage() {
                                 {config.provider_name === 'gemini' ? <Sparkles size={24} /> : <Zap size={24} />}
                             </div>
                             <div>
-                                <h3 className="text-xl font-black uppercase tracking-tight italic capitalize">{config.provider_name}</h3>
+                                <h3 className="text-xl font-black uppercase tracking-tight capitalize">{config.provider_name}</h3>
                                 <p className="text-[9px] font-bold text-black/30 uppercase tracking-widest">Provider Infrastructure</p>
                             </div>
                         </div>
@@ -147,17 +145,17 @@ export default function AISettingsPage() {
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-black/5 flex items-center justify-between">
+                        <div className="mt-8 pt-8 border-t border-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${config.api_key ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-black/40">
+                                <div className={`w-2 h-2 rounded-full ${config.api_key ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`}></div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
                                     {config.api_key ? 'Key Configured' : 'Missing Key'}
                                 </span>
                             </div>
                             <button
                                 onClick={() => updateConfig(config.provider_name, 'is_active', 1)}
                                 disabled={config.is_active}
-                                className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all ${config.is_active ? 'bg-black/5 text-black/20 cursor-not-allowed' : 'bg-[#FAF7F2] text-black hover:bg-black hover:text-white'}`}
+                                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all ${config.is_active ? 'bg-[#4B2E83]/5 text-[#4B2E83]/30 cursor-not-allowed' : 'bg-[#4B2E83] text-white hover:bg-[#5D3AB0] shadow-lg shadow-purple-900/10'}`}
                             >
                                 {config.is_active ? 'Already Active' : 'Switch to Provider'}
                             </button>
@@ -174,7 +172,7 @@ export default function AISettingsPage() {
                     </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-tight">Need a Gemini API Key?</p>
-                        <p className="text-[9px] font-bold text-black/40 uppercase tracking-widest">Generative Language API is required for this module</p>
+                        <p className="text-[9px] font-bold text-black/40 uppercase tracking-widest">Generative Language API is required for this feature</p>
                     </div>
                 </div>
                 <a

@@ -10,6 +10,6 @@ class SubscriptionPlanModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $allowedFields = ['name', 'price_monthly', 'price_yearly', 'modules', 'description'];
+    protected $allowedFields = ['name', 'price_monthly', 'price_yearly', 'credits', 'type', 'status', 'visibility', 'badge', 'discount_price', 'modules', 'description'];
     protected $useTimestamps = true;
 }

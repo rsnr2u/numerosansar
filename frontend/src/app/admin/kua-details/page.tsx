@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Globe, PenTool, Trash2, ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";

@@ -23,6 +23,9 @@ class ClientBusinessCheckModel extends Model
         'pythagorean_root',
         'chaldean_result',
         'pythagorean_result',
+        'numerology_compound',
+        'numerology_root',
+        'numerology_result',
         'is_confirmed',
         'created_at',
         'updated_at'

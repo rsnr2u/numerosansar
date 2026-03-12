@@ -12,7 +12,20 @@ class CompoundNumberModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['number', 'title', 'description', 'result'];
+    protected $allowedFields = [
+        'number',
+        'title',
+        'description',
+        'result',
+        'description_telugu',
+        'description_hindi',
+        'description_bengali',
+        'description_devanagari',
+        'description_kannada',
+        'description_tamil',
+        'description_malayalam',
+        'description_gujarati'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

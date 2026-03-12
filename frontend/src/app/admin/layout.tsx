@@ -1,9 +1,5 @@
-"use client";
-
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import {
     Database,
     Settings,
@@ -22,10 +18,14 @@ import {
     BriefcaseBusiness,
     ShieldCheck,
     Grid,
-    Globe
+    Globe,
+    CreditCard,
+    UserCheck
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/context/LanguageContext";
 
 function NavDropdown({
     name,
@@ -71,19 +71,19 @@ function NavDropdown({
                     }`}
             >
                 {icon}
-                <span>{name}</span>
+                {name && <span>{name}</span>}
                 <ChevronDown size={12} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
                 <div
-                    className="absolute right-0 mt-2 w-48 bg-white border border-black/5 rounded-2xl shadow-2xl z-50 overflow-hidden py-1"
+                    className="absolute right-0 mt-2 w-48 bg-white border border-black/5 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
                 >
                     <div className="px-3 py-2 text-[8px] font-black uppercase tracking-widest text-black/20">{name}</div>
                     {items.map((item) => (
                         <Link
                             key={item.path}
-                            href={item.path}
+                            to={item.path}
                             onClick={() => setActiveDropdown(null)}
                             className={`flex items-center gap-3 px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${pathname === item.path
                                 ? "bg-[#10B981]/10 text-[#10B981]"
@@ -94,7 +94,7 @@ function NavDropdown({
                             {item.name}
                         </Link>
                     ))}
-                    {type === 'settings' && (
+                    {(type === 'settings' || type === 'user') && (
                         <>
                             <div className="h-px bg-black/5 my-1 mx-2"></div>
                             <button
@@ -112,65 +112,72 @@ function NavDropdown({
     );
 }
 
-export default function AdminLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function AdminLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const pathname = usePathname();
-    const router = useRouter();
+    const location = useLocation();
+    const pathname = location.pathname;
+    const navigate = useNavigate();
     const [domLoaded, setDomLoaded] = useState(false);
-    const { theme, setTheme } = useTheme();
     const [siteTitle, setSiteTitle] = useState("HUB");
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [userModules, setUserModules] = useState<string[]>([]);
+    const [brandName, setBrandName] = useState<string | null>(null);
+    const [businessName, setBusinessName] = useState<string | null>(null);
+    const [brandLogo, setBrandLogo] = useState<string | null>(null);
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [credits, setCredits] = useState<number>(0);
+    const [isTrial, setIsTrial] = useState(false);
 
     useEffect(() => {
         setDomLoaded(true);
-
-        // Global Click Debugger
-        const handleGlobalClick = (e: MouseEvent) => {
-            console.log("Global Click Detected:", {
-                element: (e.target as HTMLElement).tagName,
-                classes: (e.target as HTMLElement).className,
-                id: (e.target as HTMLElement).id
-            });
-            // Visual feedback
-            const dot = document.createElement("div");
-            dot.style.position = "fixed";
-            dot.style.left = `${e.clientX - 5}px`;
-            dot.style.top = `${e.clientY - 5}px`;
-            dot.style.width = "10px";
-            dot.style.height = "10px";
-            dot.style.background = "red";
-            dot.style.borderRadius = "50%";
-            dot.style.zIndex = "99999";
-            dot.style.pointerEvents = "none";
-            document.body.appendChild(dot);
-            setTimeout(() => dot.remove(), 500);
-        };
-        window.addEventListener("click", handleGlobalClick);
 
         const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
         const role = localStorage.getItem('user_role');
         setUserRole(role);
 
         if (!token && !pathname?.includes('/login')) {
-            router.push('/admin/login');
+            navigate('/admin/login');
         }
 
         setActiveDropdown(null);
 
         if (token) {
+            // Check JWT expiration
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    console.warn("Session expired on client check");
+                    handleLogout();
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to parse token", e);
+                handleLogout();
+                return;
+            }
+
             api.get('/admin/settings')
                 .then(res => res.json())
                 .then(data => {
                     if (data.site_title) setSiteTitle(data.site_title);
+                    if (data.credits_remaining !== undefined) setCredits(data.credits_remaining);
+                    if (data.is_trial !== undefined) setIsTrial(data.is_trial);
                 })
                 .catch(err => {
                     console.error("Layout Settings Fetch Error:", err);
+                });
+
+            api.get('/admin/profile')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.brand_name) setBrandName(data.brand_name);
+                    if (data.business_name) setBusinessName(data.business_name);
+                    if (data.brand_logo) setBrandLogo(data.brand_logo);
+                    if (data.profile_photo) setProfilePhoto(data.profile_photo);
+                })
+                .catch(err => {
+                    console.error("Layout Profile Fetch Error:", err);
                 });
 
             api.get('/admin/subscription')
@@ -189,10 +196,10 @@ export default function AdminLayout({
                 .catch(err => {
                     console.error("Layout Subscription Fetch Error:", err);
                 });
-        }
 
-        return () => window.removeEventListener("click", handleGlobalClick);
-    }, [router, pathname]);
+
+        }
+    }, [navigate, pathname]);
 
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
@@ -200,15 +207,15 @@ export default function AdminLayout({
         localStorage.removeItem('user_role');
         localStorage.removeItem('username');
         localStorage.removeItem('user_modules');
-        router.push('/admin/login');
+        navigate('/admin/login');
     };
 
     const mainNav = [
-        { name: "Dash", icon: <LayoutDashboard size={14} />, path: "/admin/dashboard" },
+        { name: "Dashboard", icon: <LayoutDashboard size={14} />, path: "/admin/dashboard" },
         { name: "Clients", icon: <Users size={14} />, path: "/admin/clients" },
     ];
 
-    const numerologyMenu = [
+    const astrologyMenu = [
         { name: "Compounds", icon: <Database size={14} />, path: "/admin/compounds" },
         { name: "Auspicious", icon: <Star size={14} />, path: "/admin/auspicious" },
         { name: "Vowels", icon: <AlertOctagon size={14} />, path: "/admin/vowel-consonant" },
@@ -219,31 +226,42 @@ export default function AdminLayout({
         { name: "Grid Master", icon: <Database size={14} />, path: "/admin/lo-shu-grid-master" },
     ];
 
-    const settingsMenu = [
-        ...(userRole === 'super_admin' ? [{ name: "General", icon: <Settings size={14} />, path: "/admin/settings" }] : []),
-        ...(userRole === 'super_admin' ? [{ name: "AI Tech", icon: <Sparkles size={14} />, path: "/admin/ai-settings" }] : []),
+    const userMenu = [
+        { name: "My Credits", icon: <CreditCard size={14} />, path: "/admin/credits" },
         { name: "My Profile", icon: <User size={14} />, path: "/admin/profile" },
+        ...(userRole === 'super_admin' ? [{ name: "General Settings", icon: <Settings size={14} />, path: "/admin/settings" }] : []),
     ];
 
     if (!domLoaded) return null;
 
     if (pathname?.startsWith('/admin/login')) {
-        return <>{children}</>;
+        return <Outlet />;
     }
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] font-sans flex flex-col">
             {/* --- Corporate Topbar --- */}
             <header
-                className="fixed top-0 left-0 w-full z-50 h-16 shadow-lg flex items-center border-b border-white/10"
-                style={{ background: 'linear-gradient(75deg, #F7D700 13%, #E61111 81%)' }}
+                className="fixed top-0 left-0 w-full z-50 h-16 shadow-2xl flex items-center border-b border-white/5 backdrop-blur-md"
+                style={{ background: 'linear-gradient(135deg, #4B2E83 0%, #3a2366 100%)' }}
             >
                 <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
-                    <Link href="/admin/dashboard" className="flex items-center gap-3">
-                        <div className="p-1.5 bg-white/10 rounded-lg backdrop-blur-sm">
-                            <Sparkles className="text-[#D4AF37]" size={20} />
+                    <Link to="/admin/dashboard" className="flex items-center gap-3 group">
+                        <div className="p-1.5 bg-white/10 rounded-lg backdrop-blur-sm group-hover:bg-white/20 transition-all border border-white/10 flex items-center justify-center overflow-hidden w-10 h-10">
+                            {brandLogo ? (
+                                <img src={`${API_BASE_URL.replace('/api', '')}/${brandLogo}`} alt="Logo" className="w-full h-full object-contain" />
+                            ) : (
+                                <Sparkles className="text-[#D4AF37]" size={20} />
+                            )}
                         </div>
-                        <span className="text-xl font-bold tracking-tight text-white uppercase">{siteTitle} <span className="text-white/40 font-light">Admin</span></span>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-black tracking-tight text-white uppercase leading-none mb-0.5">
+                                {businessName || "NUMERO SANSAR"}
+                            </span>
+                            <span className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] leading-none">
+                                {brandName ? `${brandName} Hub` : "Elite Admin Profile"}
+                            </span>
+                        </div>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-2">
@@ -252,7 +270,7 @@ export default function AdminLayout({
                             return (
                                 <Link
                                     key={item.path}
-                                    href={item.path}
+                                    to={item.path}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${isActive
                                         ? "bg-white/10 text-white shadow-inner"
                                         : "text-white/60 hover:text-white hover:bg-white/5"
@@ -267,27 +285,57 @@ export default function AdminLayout({
                         <NavDropdown
                             name="Archive"
                             icon={<Database size={14} />}
-                            items={numerologyMenu}
-                            type="numerology"
+                            items={astrologyMenu}
+                            type="astrology"
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
                             pathname={pathname || ''}
                             handleLogout={handleLogout}
                         />
-                        <NavDropdown
-                            name="Settings"
-                            icon={<Settings size={14} />}
-                            items={settingsMenu}
-                            type="settings"
-                            activeDropdown={activeDropdown}
-                            setActiveDropdown={setActiveDropdown}
-                            pathname={pathname || ''}
-                            handleLogout={handleLogout}
-                        />
+
+                        <div className="h-8 w-px bg-white/10 mx-2 hidden md:block"></div>
+
+                        <div className="flex items-center gap-4 pl-2 relative">
+                            {/* Navbar Credit Indicator */}
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-xl border border-white/20">
+                                <span className="text-[10px] font-black text-white uppercase tracking-tighter">Credits: {credits}</span>
+                                <button
+                                    onClick={() => navigate('/admin/credits')}
+                                    className="px-2 py-0.5 bg-[#C9A227] text-white rounded text-[8px] font-black uppercase tracking-widest hover:bg-white hover:text-[#4B2E83] transition-all"
+                                >
+                                    Buy
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col items-end hidden lg:flex">
+                                <span className="text-[10px] font-black text-white uppercase tracking-tighter leading-none mb-1">
+                                    {localStorage.getItem('username') || 'Elite Member'}
+                                </span>
+                                <span className="text-[8px] font-black text-[#C9A227] uppercase tracking-[0.2em] leading-none">Verified Master</span>
+                            </div>
+                            
+                            <NavDropdown
+                                name=""
+                                icon={<div className="w-10 h-10 rounded-lg border border-white/10 bg-white/5 overflow-hidden group transition-all hover:border-[#C9A227]/50 flex items-center justify-center">
+                                    {profilePhoto ? (
+                                        <img src={`${API_BASE_URL.replace('/api', '')}/${profilePhoto}`} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-full h-full p-2 text-white/40" />
+                                    )}
+                                </div>}
+                                items={userMenu}
+                                type="user"
+                                activeDropdown={activeDropdown}
+                                setActiveDropdown={setActiveDropdown}
+                                pathname={pathname || ''}
+                                handleLogout={handleLogout}
+                            />
+                        </div>
+
                         {/* Super Admin Switcher - DIRECT ACCESS */}
                         {userRole === 'super_admin' && (
                             <Link
-                                href="/super-admin/dashboard"
+                                to="/super-admin/dashboard"
                                 className="ml-4 px-4 py-2 bg-[#E61111] hover:bg-[#CC0000] text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 transition-all"
                             >
                                 <ShieldCheck size={14} />
@@ -303,21 +351,50 @@ export default function AdminLayout({
                         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
+
+                {/* Mobile Menu */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="absolute top-16 left-0 w-full bg-[#E61111] border-b border-white/10 p-6 md:hidden shadow-2xl z-40 space-y-4"
+                        >
+                            <div className="grid grid-cols-2 gap-3">
+                                {mainNav.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="flex items-center gap-3 p-4 bg-white/10 rounded-xl text-white font-bold text-xs uppercase tracking-wide"
+                                    >
+                                        {item.icon}
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="p-4 bg-white/10 rounded-xl space-y-4">
+                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Global Language</p>
+                                <div id="google_translate_element_mobile"></div>
+                            </div>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full p-4 bg-white/5 text-white/60 font-bold text-xs uppercase tracking-wide rounded-xl flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={16} /> Terminate Session
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             {/* Content Area */}
             <main className="flex-1 pt-24 px-6 pb-12 w-full max-w-7xl mx-auto" data-hydrated={domLoaded}>
-                {children}
+                <Outlet />
             </main>
-
-            {/* Diagnostic Button */}
-            <button
-                onClick={() => alert("Diagnostic Button Clicked!")}
-                className="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-full z-[99999] shadow-2xl font-black text-xs uppercase"
-            >
-                Test Interactivity
-            </button>
         </div>
     );
 }
-

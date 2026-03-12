@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,7 +13,7 @@ import {
     Database,
     ArrowLeft
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 
 const SEED_DATA = [
@@ -58,7 +56,7 @@ const SEED_DATA = [
 ];
 
 export default function SuperAdminSectorsPage() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [sectors, setSectors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -155,8 +153,8 @@ export default function SuperAdminSectorsPage() {
             {/* Header Area */}
             <div className="flex justify-between items-center px-1">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic">Business Sectors</h1>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/20 mt-1">Economic Domain Segmentation & Mapping</p>
+                    <h1 className="text-4xl font-black tracking-tight text-slate-900">Business Sectors</h1>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mt-1">Economic Domain Segmentation & Mapping</p>
                 </div>
                 <div className="flex gap-4">
                     {sectors.length === 0 && (
@@ -174,9 +172,9 @@ export default function SuperAdminSectorsPage() {
                             setFormData({ sector_name: "", primary_planet: "", chaldean_targets: "", pythagorean_targets: "", lucky_numbers: "" });
                             setIsModalOpen(true);
                         }}
-                        className="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-xl transition-all flex items-center gap-2"
+                        className="px-8 py-4 bg-[#4B2E83] text-white rounded-[2rem] font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-purple-900/20 hover:bg-[#5D3AB0] transition-all flex items-center gap-2 active:scale-95"
                     >
-                        <Plus size={16} /> Architect New Sector
+                        <Plus size={18} className="text-[#C9A227]" /> Architect New Sector
                     </button>
                 </div>
             </div>
@@ -184,11 +182,11 @@ export default function SuperAdminSectorsPage() {
             {/* Content Search */}
             <div className="flex justify-end">
                 <div className="relative w-full md:w-96 group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-black transition-colors" size={18} />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#4B2E83] transition-colors" size={18} />
                     <input
                         type="text"
                         placeholder="Scan Industry Profiles..."
-                        className="w-full bg-white border border-slate-100 rounded-xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 outline-none focus:border-black/20 transition-all"
+                        className="w-full bg-white border border-slate-100 rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 outline-none focus:border-[#4B2E83]/20 shadow-xl shadow-slate-200/50 transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -207,10 +205,10 @@ export default function SuperAdminSectorsPage() {
                             key={sector.id}
                             className="bg-white border border-slate-100 p-6 rounded-2xl relative overflow-hidden shadow-xl shadow-slate-200/50 group"
                         >
-                            <div className="flex justify-between items-start gap-4 mb-6">
+                            <div className="flex justify-between items-start gap-4 mb-8">
                                 <div>
-                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Industrial Sector</div>
-                                    <h3 className="text-2xl font-black text-slate-900 leading-tight uppercase">{sector.sector_name}</h3>
+                                    <div className="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em] mb-1">Industrial Sector</div>
+                                    <h3 className="text-2xl font-black text-slate-900 leading-tight group-hover:text-[#4B2E83] transition-colors">{sector.sector_name}</h3>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -225,42 +223,42 @@ export default function SuperAdminSectorsPage() {
                                             });
                                             setIsModalOpen(true);
                                         }}
-                                        className="p-2 bg-slate-50 text-slate-400 hover:text-black rounded-lg transition-colors border border-slate-100"
+                                        className="p-3 bg-slate-50 text-slate-400 hover:text-[#4B2E83] hover:bg-[#4B2E83]/5 rounded-xl transition-all shadow-sm"
                                     >
                                         <Edit3 size={14} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(sector.id)}
-                                        className="p-2 bg-slate-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
+                                        className="p-3 bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm"
                                     >
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-4 pt-4 border-t border-slate-50">
+                            <div className="space-y-4 pt-6 border-t border-slate-50">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                                        <Star size={12} className="text-amber-500 fill-amber-500" />
+                                        <Star size={12} className="text-[#C9A227] fill-[#C9A227]" />
                                         Planet
                                     </div>
-                                    <span className="text-xs font-black text-slate-900 border-b-2 border-amber-200">{sector.primary_planet || "---"}</span>
+                                    <span className="text-xs font-black text-[#4B2E83] border-b-2 border-[#C9A227]/30">{sector.primary_planet || "---"}</span>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Chaldean</div>
-                                    <div className="flex flex-wrap gap-1">
+                                <div className="space-y-2">
+                                    <div className="text-[9px] font-black tracking-[0.2em] text-slate-300 uppercase">Chaldean (Compound)</div>
+                                    <div className="flex flex-wrap gap-1.5">
                                         {(sector.chaldean_targets || sector.lucky_numbers || "---").split(',').map((n: string, i: number) => (
-                                            <span key={i} className="px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-md text-[11px] font-bold text-slate-600">{n.trim()}</span>
+                                            <span key={i} className="px-3 py-1 bg-[#4B2E83]/5 rounded-lg text-[11px] font-black text-[#4B2E83]">{n.trim()}</span>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Pythagorean</div>
-                                    <div className="flex flex-wrap gap-1">
+                                <div className="space-y-2">
+                                    <div className="text-[9px] font-black tracking-[0.2em] text-slate-300 uppercase">Pythagorean (Master)</div>
+                                    <div className="flex flex-wrap gap-1.5">
                                         {(sector.pythagorean_targets || "---").split(',').map((n: string, i: number) => (
-                                            <span key={i} className="px-2.5 py-1 bg-slate-950 text-white rounded-md text-[11px] font-bold shadow-lg shadow-black/10">{n.trim()}</span>
+                                            <span key={i} className="px-3 py-1 bg-[#4B2E83] text-white rounded-lg text-[11px] font-black shadow-lg shadow-purple-900/10 border border-[#C9A227]/20">{n.trim()}</span>
                                         ))}
                                     </div>
                                 </div>
@@ -277,7 +275,7 @@ export default function SuperAdminSectorsPage() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/20 backdrop-blur-md" onClick={() => setIsModalOpen(false)} />
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 overflow-hidden">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-black italic uppercase tracking-tight text-slate-900">{editingSector ? 'RE-ARCHITECT' : 'ARCHITECT'} <span className="text-slate-400 font-normal">PROFILE</span></h2>
+                                <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">{editingSector ? 'RE-ARCHITECT' : 'ARCHITECT'} <span className="text-slate-400 font-normal">PROFILE</span></h2>
                                 <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-black transition-colors"><X size={24} /></button>
                             </div>
                             <form onSubmit={handleSave} className="space-y-6">
@@ -300,8 +298,8 @@ export default function SuperAdminSectorsPage() {
                                     </div>
                                 </div>
                                 <div className="pt-6">
-                                    <button type="submit" disabled={isSaving} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-sm hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-2">
-                                        <Save size={18} /> {isSaving ? 'Synching...' : 'Finalize Profile'}
+                                    <button type="submit" disabled={isSaving} className="w-full py-5 bg-[#4B2E83] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-purple-900/40 hover:bg-[#5D3AB0] transition-all active:scale-95 flex items-center justify-center gap-3">
+                                        <Save size={20} className="text-[#C9A227]" /> {isSaving ? 'Synching...' : 'Finalize Profile'}
                                     </button>
                                 </div>
                             </form>

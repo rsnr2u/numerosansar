@@ -12,6 +12,163 @@ class AIController extends BaseController
 {
     use ResponseTrait;
 
+    public function analyzeLoShu()
+    {
+        if (!$this->checkModuleAccess('ai')) {
+            return $this->failForbidden('Access to AI features requires a Professional subscription.');
+        }
+
+        $input = $this->request->getJSON(true);
+        $clientId = $input['client_id'] ?? null;
+        $name = $input['name'] ?? 'Client';
+        $chaldeanSum = $input['chaldeanSum'] ?? '?';
+        $missingNumbers = $input['missingNumbers'] ?? [];
+        $language = $input['language'] ?? 'English';
+
+        // Get active configuration
+        $config = AiConfigurationModel::getActiveConfig();
+
+        if (!$config || empty($config['api_key'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'No active Gemini API key found. Please configure it in Super Admin settings.'
+            ]);
+        }
+
+        $provider = $config['provider_name'];
+        if ($provider !== 'gemini') {
+            return $this->fail('Lo Shu Analysis currently supports Gemini provider only.');
+        }
+
+        $apiKey = trim($config['api_key']);
+        $model = trim($config['model_name']);
+
+        $prompt = "You are a professional Chaldean and Lo Shu Numerologist. 
+User Name: $name (Chaldean Compound Number: $chaldeanSum)
+Loshu Grid Missing Numbers: " . implode(", ", $missingNumbers) . "
+
+Based on this data, generate a deep professional report in JSON format with:
+1. A \"personality_insight\" string (detailed, min 150 words).
+2. A \"career_advice\" string (tailored to their strengths and missing elements).
+3. A \"remedies\" array of strings (specific practical remedies for the missing numbers).
+
+CRITICAL INSTRUCTION: Generate the values of these fields in the $language language. HOWEVER, the JSON keys themselves (personality_insight, career_advice, remedies) MUST REMAIN IN ENGLISH.
+
+Return ONLY valid JSON.
+Example format:
+{
+  \"personality_insight\": \"... (in $language) ...\",
+  \"career_advice\": \"... (in $language) ...\",
+  \"remedies\": [\"... (in $language) ...\"]
+}";
+
+        try {
+            $response = $this->callGemini($apiKey, $model, $prompt);
+
+            // callGemini returns an array if successful
+            if (empty($response)) {
+                return $this->fail('Failed to generate analysis from Gemini.');
+            }
+
+            // Save to Client Table if clientId exists
+            if ($clientId) {
+                $clientModel = new \App\Models\ClientModel();
+                $clientModel->update($clientId, [
+                    'loshu_ai_report' => json_encode($response)
+                ]);
+            }
+
+            return $this->respond([
+                'success' => true,
+                'analysis' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', "Lo Shu AI Analysis Error: " . $e->getMessage());
+            return $this->respond([
+                'success' => false,
+                'message' => 'AI Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function yearlyPrediction()
+    {
+        if (!$this->checkModuleAccess('ai')) {
+            return $this->failForbidden('Access to AI features requires a Professional subscription.');
+        }
+
+        $input = $this->request->getJSON(true);
+        $clientId = $input['client_id'] ?? null;
+        $name = $input['name'] ?? 'Client';
+        $dob = $input['dob'] ?? null;
+        $chaldeanNumber = $input['chaldeanNumber'] ?? '?';
+        $driver = $input['driver'] ?? '?';
+        $conductor = $input['conductor'] ?? '?';
+        $missingNumbers = $input['missingNumbers'] ?? [];
+        $personalYear = $input['personalYear'] ?? '?';
+        $language = $input['language'] ?? 'English';
+
+        // Get active configuration
+        $config = AiConfigurationModel::getActiveConfig();
+
+        if (!$config || empty($config['api_key'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'No active Gemini API key found. Please configure it in Super Admin settings.'
+            ]);
+        }
+
+        $apiKey = trim($config['api_key']);
+        $model = trim($config['model_name']);
+
+        $prompt = "Analyze the following Numerology data for a professional report:
+- Name: $name (Chaldean Sum: $chaldeanNumber)
+- DOB: $dob (Driver: $driver, Conductor: $conductor)
+- Missing Loshu Numbers: " . implode(", ", $missingNumbers) . "
+- Target Year: 2026 (Personal Year: $personalYear)
+
+Return a JSON object precisely with:
+{
+  \"year_summary\": \"string\",
+  \"career_and_wealth\": \"string\",
+  \"health_and_family\": \"string\",
+  \"directional_remedy\": { \"direction\": \"string\", \"action\": \"string\" },
+  \"lucky_colors\": [\"string\"],
+  \"monthly_highlights\": [ { \"month\": \"string\", \"prediction\": \"string\" } ]
+}
+
+CRITICAL INSTRUCTION: Generate the values (strings) in the $language language. HOWEVER, the JSON keys MUST REMAIN IN ENGLISH as specified above. Return ONLY valid JSON.";
+
+        try {
+            $response = $this->callGemini($apiKey, $model, $prompt);
+
+            if (empty($response)) {
+                return $this->fail('Failed to generate yearly prediction from Gemini.');
+            }
+
+            // Save to Client Table if clientId exists
+            if ($clientId) {
+                $clientModel = new \App\Models\ClientModel();
+                $clientModel->update($clientId, [
+                    'yearly_ai_report' => json_encode($response)
+                ]);
+            }
+
+            return $this->respond([
+                'success' => true,
+                'analysis' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', "Yearly Prediction AI Error: " . $e->getMessage());
+            return $this->respond([
+                'success' => false,
+                'message' => 'AI Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function suggest()
     {
         if (!$this->checkModuleAccess('ai')) {
@@ -22,6 +179,7 @@ class AIController extends BaseController
         $dob = $input['dob'] ?? null;
         $preferences = $input['preferences'] ?? [];
         $type = $input['type'] ?? 'person'; // 'person' or 'business'
+        $language = $input['language'] ?? 'English';
 
         // Get active configuration
         $config = AiConfigurationModel::getActiveConfig();
@@ -44,7 +202,7 @@ class AIController extends BaseController
         log_message('debug', "AI Request: provider=$provider, model=$model, type=$type, key=$keyPreview");
 
         // Construct detailed prompt
-        $prompt = $this->buildPrompt($dob, $type, $preferences);
+        $prompt = $this->buildPrompt($dob, $type, $preferences, $language);
 
         try {
             $suggestedNames = [];
@@ -81,7 +239,7 @@ class AIController extends BaseController
         }
     }
 
-    private function buildPrompt($dob, $type, $preferences)
+    private function buildPrompt($dob, $type, $preferences, $language = 'English')
     {
         // 1. Get Good Compound Numbers
         $compModel = new CompoundNumberModel();
@@ -123,6 +281,8 @@ Birth Date: $dob";
         }
 
         $prompt .= "\nPreferences: $desc $sectorPriority
+        
+CRITICAL INSTRUCTION: provide any explanations, justifications or additional insights about the names in the $language language.
 
 Target Criteria:
 - Names should ideally sum up to one of these favorable Chaldean Compound Numbers: $goodNumsStr.
@@ -366,6 +526,96 @@ Example: [\"Name One\", \"Name Two\"]";
 
         $db->transComplete();
         return $this->respond(['success' => true]);
+    }
+
+    public function yogaReport()
+    {
+        if (!$this->checkModuleAccess('ai')) {
+            return $this->failForbidden('Access to AI features requires a Professional subscription.');
+        }
+
+        $input = $this->request->getJSON(true);
+        $clientId = $input['client_id'] ?? null;
+        $name = $input['name'] ?? 'Client';
+        $dob = $input['dob'] ?? null;
+        $profession = $input['profession'] ?? 'Not Specified';
+        $language = $input['language'] ?? 'Telugu';
+
+        if (!$dob) {
+            return $this->fail('Date of birth is required for Yoga analysis.');
+        }
+
+        // 1. Detect Yogas (Ported from user's JS snippet)
+        $digits = preg_replace('/\D/', '', $dob);
+        $grid = str_split($digits);
+        $has = function ($n) use ($grid) {
+            return in_array((string) $n, $grid);
+        };
+
+        $foundYogas = [];
+        if ($has(4) && $has(9) && $has(2))
+            $foundYogas[] = "Mental Plane (తీక్షణమైన తెలివితేటలు)";
+        if ($has(3) && $has(5) && $has(7))
+            $foundYogas[] = "Emotional Plane (భావోద్వేగ సమతుల్యత)";
+        if ($has(8) && $has(1) && $has(6))
+            $foundYogas[] = "Practical Plane (ప్రాక్టికల్ ఆలోచనలు)";
+        if ($has(9) && $has(5) && $has(1))
+            $foundYogas[] = "Will Power Yoga (అపారమైన సంకల్ప బలం)";
+
+        // 2. Get active configuration
+        $config = AiConfigurationModel::getActiveConfig();
+        if (!$config || empty($config['api_key'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'No active Gemini API key found. Please configure it in Super Admin settings.'
+            ]);
+        }
+
+        $apiKey = trim($config['api_key']);
+        $model = trim($config['model_name']);
+
+        $yogasStr = !empty($foundYogas) ? implode(", ", $foundYogas) : "No major planes formed";
+
+        $prompt = "
+            User Name: $name
+            DOB: $dob
+            Profession: $profession
+            Detected Numerology Yogas: $yogasStr
+
+            Instructions:
+            1. Analyze these Loshu Grid Yogas for the user's specific profession.
+            2. Provide the report in $language.
+            3. Include a section for 'Remedies' for missing numbers in the grid.
+            4. Return ONLY valid JSON format: { \"yoga_analysis\": \"\", \"business_impact\": \"\", \"remedies\": \"\" }
+        ";
+
+        try {
+            $response = $this->callGemini($apiKey, $model, $prompt);
+
+            if (empty($response)) {
+                return $this->fail('Failed to generate Yoga report from Gemini.');
+            }
+
+            // Save to Client Table if clientId exists
+            if ($clientId) {
+                $clientModel = new \App\Models\ClientModel();
+                $clientModel->update($clientId, [
+                    'yoga_ai_report' => json_encode($response)
+                ]);
+            }
+
+            return $this->respond([
+                'success' => true,
+                'analysis' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', "Yoga AI Report Error: " . $e->getMessage());
+            return $this->respond([
+                'success' => false,
+                'message' => 'AI Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     private function getMockSuggestions($dob, $type, $preferences)

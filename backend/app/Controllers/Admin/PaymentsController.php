@@ -61,8 +61,20 @@ class PaymentsController extends BaseController
                 ->where('status', 'paid')
                 ->where('created_at >=', date('Y-01-01 00:00:00'))
                 ->get()->getRow()->amount ?? 0,
-            'active_subs' => $db->table('subscriptions')->where('status', 'active')->countAllResults(),
             'total_vendors' => $db->table('users')->where('role', 'numerologist')->countAllResults(),
+            'active_numerologists' => $db->table('users')
+                ->where('role', 'numerologist')
+                ->where('account_status', 'Active')
+                ->countAllResults(),
+            'failed_payments' => $db->table('payments')->where('status', 'failed')->countAllResults(),
+            'pending_credits' => $db->table('credit_purchases')->where('status', 'pending')->countAllResults(),
+            'total_credits_sold' => $db->table('credit_purchases')
+                ->selectSum('credits')
+                ->where('status', 'completed')
+                ->get()->getRow()->credits ?? 0,
+            'system_credit_balance' => $db->table('users')
+                ->selectSum('credits')
+                ->get()->getRow()->credits ?? 0,
         ];
 
         return $this->respond($stats);

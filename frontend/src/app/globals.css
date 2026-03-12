@@ -3,8 +3,10 @@
 @layer base {
   :root {
     /* 🏛️ Corporate Light Theme with Devotional Warmth */
-    --background: 210 40% 98%; /* #F8FAFC */
-    --foreground: 215 25% 15%; /* #1E293B (Deep Navy) */
+    --background: 210 40% 98%;
+    /* #F8FAFC */
+    --foreground: 215 25% 15%;
+    /* #1E293B (Deep Navy) */
 
     --card: 0 0% 100%;
     --card-foreground: 215 25% 15%;
@@ -12,16 +14,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    --primary: 215 25% 15%; /* Deep Navy */
+    --primary: 215 25% 15%;
+    /* Deep Navy */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 215 16% 47%; /* Slate */
+    --secondary: 215 16% 47%;
+    /* Slate */
     --secondary-foreground: 210 40% 98%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 36 80% 50%; /* Sacred Saffron Gold #D4940A */
+    --accent: 36 80% 50%;
+    /* Sacred Saffron Gold #D4940A */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 44%;
@@ -34,12 +39,18 @@
     --radius: 0.5rem;
 
     /* 🕉 Devotional Palette */
-    --saffron: 30 90% 52%; /* Warm Saffron #F09819 */
-    --saffron-deep: 24 85% 45%; /* Deep Saffron #D4770B */
-    --divine-gold: 42 78% 55%; /* Divine Gold #DAA520 */
-    --sacred-cream: 40 60% 96%; /* Sacred Cream #FBF7ED */
-    --sacred-maroon: 348 60% 30%; /* Sacred Maroon #7A1E3D */
-    --lotus-pink: 340 50% 60%; /* Lotus Pink #C7607B */
+    --saffron: 30 90% 52%;
+    /* Warm Saffron #F09819 */
+    --saffron-deep: 24 85% 45%;
+    /* Deep Saffron #D4770B */
+    --divine-gold: 42 78% 55%;
+    /* Divine Gold #DAA520 */
+    --sacred-cream: 40 60% 96%;
+    /* Sacred Cream #FBF7ED */
+    --sacred-maroon: 348 60% 30%;
+    /* Sacred Maroon #7A1E3D */
+    --lotus-pink: 340 50% 60%;
+    /* Lotus Pink #C7607B */
     --mystic-gold: 42 78% 55%;
     --mystic-gold-muted: 42 70% 38%;
     --mystic-card-bg: 0 0% 100%;
@@ -48,7 +59,8 @@
 
   .dark {
     /* 🏛️ Corporate Dark Theme with Devotional Warmth */
-    --background: 222 47% 11%; /* #0F172A */
+    --background: 222 47% 11%;
+    /* #0F172A */
     --foreground: 210 40% 98%;
 
     --card: 222 47% 13%;
@@ -212,7 +224,7 @@
   width: 600px;
   height: 600px;
   background: radial-gradient(circle, transparent 30%, transparent 30%),
-              repeating-conic-gradient(from 0deg, hsl(var(--saffron) / 0.03) 0deg 30deg, transparent 30deg 60deg);
+    repeating-conic-gradient(from 0deg, hsl(var(--saffron) / 0.03) 0deg 30deg, transparent 30deg 60deg);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
@@ -253,13 +265,25 @@
 }
 
 @keyframes gentle-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes slow-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-fade-in-up {
@@ -317,4 +341,57 @@
 .result-bad {
   background: linear-gradient(135deg, #475569 0%, #1E293B 100%);
   color: white;
+}
+
+/* --- Google Translate Widget Styling --- */
+.google-translate-container {
+  display: flex;
+  align-items: center;
+}
+
+.goog-te-gadget {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+.goog-te-gadget .goog-te-combo {
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  background-color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: #1e293b !important;
+  outline: none !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+}
+
+.goog-te-gadget span,
+.goog-te-gadget a {
+  display: none !important;
+}
+
+.goog-logo-link {
+  display: none !important;
+}
+
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+/* Hide the powered by google text */
+.goog-te-gadget {
+  color: transparent !important;
+}
+
+.goog-te-gadget .goog-te-combo {
+  color: #1e293b !important;
 }

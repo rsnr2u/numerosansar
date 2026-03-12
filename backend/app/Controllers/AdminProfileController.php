@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Models\VendorProfileModel;
 use CodeIgniter\API\ResponseTrait;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -30,8 +31,18 @@ class AdminProfileController extends BaseController
             if (!$user)
                 return $this->failNotFound('User not found');
 
+            $vendorModel = new VendorProfileModel();
+            $profile = $vendorModel->where('user_id', $userId)->first();
+
+            if (!$profile) {
+                // Initialize empty profile if not exists
+                $vendorModel->insert(['user_id' => $userId]);
+                $profile = $vendorModel->where('user_id', $userId)->first();
+            }
+
             unset($user['password']); // Don't send password
-            return $this->respond($user);
+
+            return $this->respond(array_merge($user, $profile ?: []));
 
         } catch (\Exception $e) {
             return $this->failUnauthorized('Invalid token');
@@ -51,15 +62,67 @@ class AdminProfileController extends BaseController
             $userId = $decoded->uid;
 
             $model = new UserModel();
-            $data = $this->request->getJSON(true);
+            $vendorModel = new VendorProfileModel();
+            $data = $this->request->getPost(); // Changed to getPost for file handling support
 
-            $updateData = [];
-            if (isset($data['username']))
-                $updateData['username'] = $data['username'];
-            // Add other fields if user table has them
+            $userFields = ['username', 'full_name', 'email', 'mobile', 'business_name', 'city', 'address'];
+            $profileFields = [
+                'professional_name',
+                'brand_name',
+                'professional_title',
+                'experience_years',
+                'business_type',
+                'gst_number',
+                'alt_mobile',
+                'whatsapp',
+                'website',
+                'instagram',
+                'youtube',
+                'facebook',
+                'country',
+                'state',
+                'pincode',
+                'full_address',
+                'primary_system',
+                'analysis_system',
+                'report_header',
+                'report_footer',
+                'signature_name'
+            ];
 
-            if (!empty($updateData)) {
-                $model->update($userId, $updateData);
+            $updateUser = [];
+            foreach ($userFields as $f)
+                if (isset($data[$f]))
+                    $updateUser[$f] = $data[$f];
+
+            $updateProfile = [];
+            foreach ($profileFields as $f)
+                if (isset($data[$f]))
+                    $updateProfile[$f] = $data[$f];
+
+            // Handle File Uploads
+            $files = ['brand_logo', 'signature_img', 'profile_photo'];
+            foreach ($files as $fileName) {
+                $file = $this->request->getFile($fileName);
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move(FCPATH . 'uploads/profiles', $newName);
+                    $updateProfile[$fileName] = 'uploads/profiles/' . $newName;
+                }
+            }
+
+            if (!empty($updateUser)) {
+                $model->update($userId, $updateUser);
+            }
+
+            if (!empty($updateProfile)) {
+                $existing = $vendorModel->where('user_id', $userId)->first();
+                if ($existing) {
+                    $vendorModel->update($existing['id'], $updateProfile);
+                } else {
+                    $updateProfile['user_id'] = $userId;
+                    $vendorModel->insert($updateProfile);
+                }
             }
 
             return $this->respond(['message' => 'Profile updated successfully']);

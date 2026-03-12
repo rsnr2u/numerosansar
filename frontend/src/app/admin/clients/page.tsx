@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import {
     Plus, Search, User, Phone, Mail, MapPin,
@@ -7,13 +5,13 @@ import {
     Filter, MoreVertical, ExternalLink, ChevronLeft,
     ChevronsLeft, ChevronsRight, ArrowUpDown
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ClientsPage() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [clients, setClients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -23,6 +21,7 @@ export default function ClientsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [totalRecords, setTotalRecords] = useState(0);
+    const [serverStats, setServerStats] = useState({ active_today: 0, success_rate: "0%" });
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -52,6 +51,7 @@ export default function ClientsPage() {
                 // Backend returns { data: [], total: 0, ... }
                 setClients(Array.isArray(result.data) ? result.data : []);
                 setTotalRecords(result.total || 0);
+                setServerStats(result.stats || { active_today: 0, success_rate: "0%" });
             }
         } catch (err) {
             console.error("Failed to fetch clients", err);
@@ -77,8 +77,8 @@ export default function ClientsPage() {
 
     const stats = [
         { label: "Total Clients", value: totalRecords, icon: <Users size={20} className="text-white" />, color: "bg-blue-600" },
-        { label: "Active Today", value: "8", icon: <UserPlus size={20} className="text-white" />, color: "bg-emerald-600" },
-        { label: "Success Rate", value: "94%", icon: <ExternalLink size={20} className="text-white" />, color: "bg-amber-500" },
+        { label: "Active Today", value: serverStats.active_today, icon: <UserPlus size={20} className="text-white" />, color: "bg-emerald-600" },
+        { label: "Success Rate", value: serverStats.success_rate, icon: <ExternalLink size={20} className="text-white" />, color: "bg-amber-500" },
     ];
 
     return (
@@ -103,7 +103,7 @@ export default function ClientsPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                    <Link href="/admin/clients/add">
+                    <Link to="/admin/clients/add">
                         <button className="relative group overflow-hidden bg-[#fd8c01] text-[#3F1000] px-8 py-4 rounded-2xl font-black transition-all shadow-2xl shadow-[#fd8c01]/30 hover:shadow-[#fd8c01]/50 active:scale-95 flex items-center gap-3">
                             <Plus size={20} className="relative z-10" />
                             <span className="relative z-10 uppercase tracking-[0.15em] text-[11px]">Add New Client</span>
@@ -217,7 +217,7 @@ export default function ClientsPage() {
                                 </tr>
                             ) : (
                                 clients.map((client) => (
-                                    <tr key={client.id} className="group hover:bg-[#f8fafc] transition-colors cursor-pointer" onClick={() => router.push(`/admin/clients/${client.id}`)}>
+                                    <tr key={client.id} className="group hover:bg-[#f8fafc] transition-colors cursor-pointer" onClick={() => navigate(`/admin/clients/${client.id}`)}>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div>
@@ -258,7 +258,7 @@ export default function ClientsPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => router.push(`/admin/clients/${client.id}`)}
+                                                    onClick={() => navigate(`/admin/clients/${client.id}`)}
                                                     className="p-2 text-[#94a3b8] hover:text-[#fd8c01] hover:bg-white rounded-lg transition-all shadow-sm"
                                                 >
                                                     <ChevronRight size={18} strokeWidth={3} />

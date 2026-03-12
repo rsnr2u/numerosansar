@@ -1,4 +1,4 @@
-"use client";
+
 
 import React from "react";
 import { motion } from "framer-motion";
@@ -8,10 +8,10 @@ interface SystemResult {
     system: string;
     compound: number;
     single: number;
-    planet: string | undefined;
-    meaning: string | undefined;
-    description: string | undefined;
-    resultType: string | undefined;
+    planet?: string;
+    meaning?: string;
+    description?: string;
+    resultType?: string;
 }
 
 const getResultColor = (result: string | undefined) => {
@@ -35,8 +35,12 @@ const getBadgeColor = (result: string | undefined) => {
 };
 
 const SystemCard = ({ result }: { result: SystemResult }) => {
-    const isChaldean = result.system === "Chaldean";
-    const baseColorClass = isChaldean ? "text-astro-gold" : "text-astro-red";
+    const getSystemColor = (system: string) => {
+        if (system === "Chaldean") return "text-astro-gold";
+        if (system === "Pythagorean") return "text-astro-red";
+        return "text-[#6366f1]"; // Purple for Numerology
+    };
+    const baseColorClass = getSystemColor(result.system);
     const statusBorder = getResultColor(result.resultType);
 
     return (

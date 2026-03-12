@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Sparkles, PenTool, Plus, Trash2, Save, Download, Search, FileText, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -23,7 +21,7 @@ export default function LuckyNameNumbersPage() {
     const [selected, setSelected] = useState<Partial<LuckyNameNumber>>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [userRole, setUserRole] = useState<string | null>(null);
-    const router = useRouter();
+    const navigate = useNavigate();
 
     useEffect(() => {
         setUserRole(localStorage.getItem('user_role'));

@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, User, Sparkles, ArrowLeft, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -13,8 +11,8 @@ export default function AdminLogin() {
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const router = useRouter();
-    const searchParams = useSearchParams();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     useEffect(() => {
         setMounted(true);
@@ -46,7 +44,7 @@ export default function AdminLogin() {
                 localStorage.setItem("admin_token", data.token);
                 localStorage.setItem("user_role", data.user.role);
                 localStorage.setItem("username", data.user.username);
-                router.push("/admin/dashboard");
+                navigate("/admin/dashboard");
             } else {
                 // Handle non-OK responses
                 if (data._error) {
@@ -81,7 +79,7 @@ export default function AdminLogin() {
                 <div className="text-center mb-10 relative z-10">
                     <div
                         className="p-4 bg-[#1E293B] rounded-2xl inline-block mb-6 shadow-xl cursor-pointer hover:scale-105 transition-transform"
-                        onClick={() => router.push('/')}
+                        onClick={() => navigate('/')}
                     >
                         <Lock className="text-[#D4AF37] w-6 h-6" />
                     </div>
@@ -147,7 +145,7 @@ export default function AdminLogin() {
 
                 <div className="mt-10 border-t border-slate-100 pt-8 text-center relative z-10">
                     <button
-                        onClick={() => router.push("/")}
+                        onClick={() => navigate("/")}
                         className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#1E293B] transition-colors inline-flex items-center gap-2 group"
                     >
                         <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> Universal Exit
