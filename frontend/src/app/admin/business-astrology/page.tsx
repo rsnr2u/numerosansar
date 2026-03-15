@@ -140,7 +140,6 @@ export default function BusinessAstrology() {
     const [showListing, setShowListing] = useState(false);
     const [showChaldean, setShowChaldean] = useState(true);
     const [showPythagorean, setShowPythagorean] = useState(false);
-    const [showNumerology, setShowNumerology] = useState(true);
 
     const [availableCredits, setAvailableCredits] = useState<number>(0);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -319,7 +318,6 @@ export default function BusinessAstrology() {
             setBreakdown([]);
             setChaldeanRes(null);
             setPythagoreanRes(null);
-            setNumerologyRes(null);
             return;
         }
 
@@ -330,12 +328,10 @@ export default function BusinessAstrology() {
         chars.forEach(char => {
             const cv = chMap[char] || 0;
             const pv = pyMap[char] || 0;
-            const nv = nuMap[char] || 0;
-            newBreakdown.push({ char, chaldean: cv, pythagorean: pv, numerology: nv });
+            newBreakdown.push({ char, chaldean: cv, pythagorean: pv, numerology: 0 });
 
             chTotal += cv;
             pyTotal += pv;
-            nuTotal += nv;
         });
 
         setBreakdown(newBreakdown);
@@ -367,17 +363,7 @@ export default function BusinessAstrology() {
             resultType: pyM?.result || 'Analyzed'
         });
 
-        const nuSingle = reduceNumber(nuTotal);
-        const nuM = getMeaning(nuTotal);
-        setNumerologyRes({
-            system: "Numerology",
-            compound: nuTotal,
-            single: nuSingle,
-            planet: getPlanet(nuSingle),
-            meaning: nuM?.title,
-            description: nuM?.description,
-            resultType: nuM?.result || 'Analyzed'
-        });
+
 
     }, [businessName, loadingData, chMap, pyMap, nuMap, compounds, planets]);
 
@@ -523,7 +509,6 @@ export default function BusinessAstrology() {
         // Configuration
         const showPyth = showPythagorean;
         const showChald = showChaldean;
-        const showNum = showNumerology;
 
         // --- Header ---
         doc.setFontSize(22);
@@ -578,7 +563,7 @@ export default function BusinessAstrology() {
 
         // --- Breakdown Table ---
         yPos += 10;
-        const activeSystemsCount = [showChald, showPyth, showNum].filter(Boolean).length;
+        const activeSystemsCount = [showChald, showPyth].filter(Boolean).length;
         const tableHead = activeSystemsCount > 1
             ? [["System", ...breakdown.map(b => b.char)]]
             : [[...breakdown.map(b => b.char)]];
@@ -592,11 +577,6 @@ export default function BusinessAstrology() {
         if (showPyth) {
             const row: (string | number)[] = [...breakdown.map(b => b.pythagorean)];
             if (activeSystemsCount > 1) row.unshift("Pythagorean");
-            tableBody.push(row);
-        }
-        if (showNum) {
-            const row: (string | number)[] = [...breakdown.map(b => b.numerology)];
-            if (activeSystemsCount > 1) row.unshift("Numerology");
             tableBody.push(row);
         }
 
@@ -651,8 +631,7 @@ export default function BusinessAstrology() {
         };
 
         if (showChald && chaldeanRes) drawSystemResult("Chaldean System", chaldeanRes, activeSystemsCount > 1 ? 15 : 65, yPos);
-        if (showPyth && pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, activeSystemsCount === 3 ? 65 : (activeSystemsCount === 2 && !showChald ? 15 : 110), yPos);
-        if (showNum && numerologyRes) drawSystemResult("Numerology System", numerologyRes, activeSystemsCount === 3 ? 115 : (activeSystemsCount === 2 ? 110 : 65), yPos);
+        if (showPyth && pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, activeSystemsCount === 2 && !showChald ? 15 : 110, yPos);
 
         yPos += 70;
 
@@ -754,9 +733,6 @@ export default function BusinessAstrology() {
                                         <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase tracking-wider">
                                             PY: {record.pythagorean_compound}
                                         </span>
-                                        <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-[10px] font-black uppercase tracking-wider">
-                                            NU: {record.numerology_compound}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -812,15 +788,6 @@ export default function BusinessAstrology() {
                                 className={`w-12 h-6 rounded-full transition-all relative border ${showPythagorean ? 'bg-[#6366f1] border-[#6366f1]' : 'bg-gray-200 border-gray-200'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showPythagorean ? 'left-7' : 'left-1'}`} />
-                            </button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <label className="text-[10px] font-black uppercase text-muted-foreground">Numerology</label>
-                            <button
-                                onClick={() => setShowNumerology(!showNumerology)}
-                                className={`w-12 h-6 rounded-full transition-all relative border ${showNumerology ? 'bg-primary border-primary' : 'bg-gray-200 border-gray-200'}`}
-                            >
-                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showNumerology ? 'left-7' : 'left-1'}`} />
                             </button>
                         </div>
                     </div>
@@ -983,13 +950,11 @@ export default function BusinessAstrology() {
                         </div>
                     </div>
 
-                    {/* Results Area */}
-                    {(chaldeanRes && pythagoreanRes && numerologyRes) && (
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-
-                            {/* Birth Data & Lucky Numbers (Reference) */}
+                    {/* Birth Data & Lucky Numbers & Sector Info */}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+                        <div className={`grid grid-cols-1 md:grid-cols-2 ${(birthDataRef && selectedSectorId) ? (showPythagorean ? 'lg:grid-cols-5' : 'lg:grid-cols-4') : (birthDataRef ? 'lg:grid-cols-3' : (selectedSectorId ? (showPythagorean ? 'lg:grid-cols-2 lg:max-w-xl' : 'lg:max-w-sm') : ''))} gap-6`}>
                             {birthDataRef && (
-                                <div className={`grid grid-cols-1 md:grid-cols-2 ${selectedSectorId ? (showPythagorean || showNumerology ? 'lg:grid-cols-5' : 'lg:grid-cols-4') : 'lg:grid-cols-3'} gap-6`}>
+                                <>
                                     <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-[#10B981]/30 transition-all">
                                         <p className="text-[10px] font-black text-[#10B981] uppercase tracking-[0.2em] mb-4 text-center">Driver (Reference)</p>
                                         <div className="text-6xl font-black text-foreground mb-2 group-hover:scale-110 transition-transform duration-500">{birthDataRef.driver}</div>
@@ -1021,45 +986,47 @@ export default function BusinessAstrology() {
                                             )}
                                         </div>
                                     </div>
-
-                                    {selectedSectorId && sectors.find(s => s.id === selectedSectorId) && (
-                                        <>
-
-
-                                            {showPythagorean && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.9 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-black/50 transition-all"
-                                                >
-                                                    <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-4 text-center">Sector Pythagorean</p>
-                                                    <div className="flex flex-wrap gap-2 justify-center">
-                                                        {sectors.find(s => s.id === selectedSectorId).pythagorean_targets?.split(',').map((num: string, i: number) => (
-                                                            <div key={i} className="w-10 h-10 rounded-full bg-black/10 border border-black/20 flex items-center justify-center text-black font-black text-lg hover:bg-black hover:text-white transition-all cursor-default shadow-sm shadow-black/10">
-                                                                {num.trim()}
-                                                            </div>
-                                                        )) || <div className="text-muted-foreground text-[10px] italic">No targets set</div>}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-
-                                            <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-amber-500/30 transition-all">
-                                                <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 text-center">Sector Planet</p>
-                                                <div className="text-4xl font-black text-slate-900 mb-2 truncate px-2">{sectors.find(s => s.id === selectedSectorId).primary_planet || "N/A"}</div>
-                                                <div className="flex items-center justify-center gap-2 text-amber-600 font-bold">
-                                                    <Star size={14} className="fill-amber-600" />
-                                                    <span className="text-[9px] uppercase tracking-widest">{sectors.find(s => s.id === selectedSectorId).sector_name}</span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                </>
                             )}
 
-                            <div className={`grid grid-cols-1 ${[showChaldean, showPythagorean, showNumerology].filter(Boolean).length > 1 ? 'md:grid-cols-2 lg:grid-cols-3' : 'max-w-md mx-auto'} gap-8`}>
+                            {selectedSectorId && sectors.length > 0 && sectors.find(s => s.id === selectedSectorId) && (
+                                <>
+                                    {showPythagorean && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="bg-white p-5 rounded-2xl border border-black/5 shadow-lg flex flex-col items-center justify-center group hover:border-black/50 transition-all"
+                                        >
+                                            <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-4 text-center">Sector Pythagorean</p>
+                                            <div className="flex flex-wrap gap-2 justify-center">
+                                                {sectors.find(s => s.id === selectedSectorId).pythagorean_targets?.split(',').map((num: string, i: number) => (
+                                                    <div key={i} className="w-10 h-10 rounded-full bg-black/10 border border-black/20 flex items-center justify-center text-black font-black text-lg hover:bg-black hover:text-white transition-all cursor-default shadow-sm shadow-black/10">
+                                                        {num.trim()}
+                                                    </div>
+                                                )) || <div className="text-muted-foreground text-[10px] italic">No targets set</div>}
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    <div className="bg-white p-5 rounded-2xl border border-black/5 text-center shadow-lg group hover:border-amber-500/30 transition-all">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-4 text-center">Sector Planet</p>
+                                        <div className="text-4xl font-black text-slate-900 mb-2 truncate px-2">{sectors.find(s => s.id === selectedSectorId).primary_planet || "N/A"}</div>
+                                        <div className="flex items-center justify-center gap-2 text-amber-600 font-bold">
+                                            <Star size={14} className="fill-amber-600" />
+                                            <span className="text-[9px] uppercase tracking-widest">{sectors.find(s => s.id === selectedSectorId).sector_name}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* Results Area */}
+                    {(chaldeanRes && pythagoreanRes) && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                            <div className={`grid grid-cols-1 ${[showChaldean, showPythagorean].filter(Boolean).length > 1 ? 'md:grid-cols-2' : 'max-w-md mx-auto'} gap-8`}>
                                 {showChaldean && <SystemCard result={chaldeanRes} />}
                                 {showPythagorean && <SystemCard result={pythagoreanRes} />}
-                                {showNumerology && <SystemCard result={numerologyRes} />}
                             </div>
 
                             {/* Breakdown Table */}
@@ -1117,16 +1084,6 @@ export default function BusinessAstrology() {
                                                 </div>
                                             </div>
                                         )}
-                                        {showNumerology && (
-                                            <div className="flex items-center py-4 group hover:bg-primary/10 transition-colors rounded-xl mt-2 font-medium">
-                                                <div className="w-32 text-[10px] font-black text-primary uppercase px-4 tracking-widest flex items-center gap-2">Numerology</div>
-                                                <div className="flex gap-2">
-                                                    {breakdown.map((b, i) => (
-                                                        <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.numerology}</div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -1150,15 +1107,6 @@ export default function BusinessAstrology() {
                                             <Sparkles size={14} /> Pythagorean Vibrational Wisdom ({pythagoreanRes.compound})
                                         </h3>
                                         <p className="text-foreground/80 leading-relaxed text-sm font-medium">{pythagoreanRes.description}</p>
-                                    </div>
-                                )}
-                                {showNumerology && numerologyRes?.description && (
-                                    <div className="premium-card p-6 rounded-2xl border border-border relative overflow-hidden bg-card/40 backdrop-blur-sm group">
-                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
-                                        <h3 className="text-primary font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-                                            <Sparkles size={14} /> Numerology Essential Insights ({numerologyRes.compound})
-                                        </h3>
-                                        <p className="text-foreground/80 leading-relaxed text-sm font-medium">{numerologyRes.description}</p>
                                     </div>
                                 )}
                             </div>

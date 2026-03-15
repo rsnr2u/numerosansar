@@ -713,8 +713,7 @@ export default function AdminCheck() {
         const tableHead = [["System", ...breakdown.map(b => b.char)]];
         const tableBody = [
             ["Chaldean", ...breakdown.map(b => b.chaldean)],
-            ["Pythagorean", ...breakdown.map(b => b.pythagorean)],
-            ["Numerology", ...breakdown.map(b => b.numerology)]
+            ["Pythagorean", ...breakdown.map(b => b.pythagorean)]
         ];
 
         autoTable(doc, {
@@ -777,9 +776,8 @@ export default function AdminCheck() {
             doc.text(lines, x + 40, y + 60, { align: "center" });
         };
 
-        if (chaldeanRes) drawSystemResult("Chaldean System", chaldeanRes, 10, yPos);
-        if (pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, 75, yPos);
-        if (numerologyRes) drawSystemResult("Numerology System", numerologyRes, 140, yPos);
+        if (chaldeanRes) drawSystemResult("Chaldean System", chaldeanRes, 25, yPos);
+        if (pythagoreanRes) drawSystemResult("Pythagorean System", pythagoreanRes, 110, yPos);
 
         yPos += 85;
 
@@ -1107,11 +1105,10 @@ export default function AdminCheck() {
                             )}
 
                             {/* 1. Result Cards */}
-                            {chaldeanRes && pythagoreanRes && numerologyRes && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {chaldeanRes && pythagoreanRes && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <SystemCard result={chaldeanRes} />
                                     <SystemCard result={pythagoreanRes} />
-                                    <SystemCard result={numerologyRes} />
                                 </div>
                             )}
 
@@ -1193,18 +1190,7 @@ export default function AdminCheck() {
                                             </div>
                                         </div>
 
-                                        {/* Numerology Row */}
-                                        <div className="flex items-center py-4 group hover:bg-indigo-500/5 transition-colors rounded-xl mt-2">
-                                            <div className="w-32 text-[10px] font-black text-indigo-500 uppercase px-4 tracking-widest flex items-center gap-2">
-                                                <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                                                Numerology
-                                            </div>
-                                            <div className="flex gap-2">
-                                                {breakdown.map((b, i) => (
-                                                    <div key={i} className="w-12 text-center text-sm font-black text-foreground/70">{b.numerology}</div>
-                                                ))}
-                                            </div>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -1235,18 +1221,7 @@ export default function AdminCheck() {
                                         </p>
                                     </div>
                                 )}
-                                {numerologyRes?.description && (
-                                    <div className="p-6 rounded-2xl border border-black/5 relative overflow-hidden bg-white shadow-lg group">
-                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />
-                                        <h3 className="text-indigo-500 font-black mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em]">
-                                            <span className="p-1.5 bg-indigo-500/10 rounded-lg"><Sparkles size={14} /></span>
-                                            Numerology Essential Insights ({numerologyRes.compound})
-                                        </h3>
-                                        <p className="text-foreground/80 leading-relaxed text-sm font-medium">
-                                            {numerologyRes.description}
-                                        </p>
-                                    </div>
-                                )}
+
                             </div>
 
                         </motion.div>
@@ -1308,23 +1283,7 @@ export default function AdminCheck() {
                                 </div>
                             </div>
 
-                            {/* Numerology Key */}
-                            <div>
-                                <h3 className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                    Numerology System
-                                </h3>
-                                <div className="grid grid-cols-3 gap-3 text-center">
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                                        <div key={num} className="bg-input/20 rounded-xl p-3 border border-border hover:border-indigo-500/20 transition-all group">
-                                            <span className="text-xl font-black text-indigo-500 block mb-1 group-hover:scale-110 transition-transform">{num}</span>
-                                            <span className="text-[9px] text-muted-foreground font-black tracking-widest leading-none block">
-                                                {lettersMap.filter(l => Number(l.numerology_number) === num).map(l => l.letter).join(' ')}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+
                         </div>
 
                         {/* Visual Help */}
