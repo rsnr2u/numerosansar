@@ -11,6 +11,19 @@ $routes->options('(:any)', function () {
 });
 
 $routes->group('api', function ($routes) {
+    $routes->get('test', function () {
+        return service('response')->setJSON([
+            'status' => 'success',
+            'message' => 'Numero Sansar API is online',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'environment' => CI_ENVIRONMENT,
+            'url' => base_url()
+        ]);
+    });
+
+    // Public Endpoints
+    $routes->get('public/system-config', 'PublicController::systemConfig');
+
     $routes->post('calculate', 'AstrologyController::calculate');
     $routes->get('meanings/(:num)', 'AstrologyController::meanings/$1');
     $routes->post('login', 'AuthController::login');
